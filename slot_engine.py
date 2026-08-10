@@ -10,7 +10,7 @@ from the RNG instance passed/created inside the call, and the full outcome
 is returned as a JSON-serialisable dict.
 
 Grid:        6 rows x 5 columns (30 cells)
-Wins:        Scatter pays -> 8+ of the same symbol anywhere on the grid pays
+Wins:        Scatter pays -> 10+ of the same symbol anywhere on the grid pays
 Mechanic:    Cascade / Tumble -> winning symbols are removed, the grid
              collapses with gravity and refills from the top, repeating
              until no new win is formed.
@@ -73,10 +73,11 @@ SYMBOL_NAMES = {
 }
 
 # Scatter-pay paytable, built from a shared tier curve x a per-symbol value factor.
-# With an 8-of-30 "anywhere on grid" trigger the low tier (8-11 symbols) lands very
-# often, so its payout must stay tiny; the payout only becomes serious from tier 15+,
-# where landing that many of one symbol is a genuine (and, for 25+, extremely rare) event.
-_TIER_CURVE: Dict[int, float] = {8: 0.00426, 10: 0.01277, 12: 0.03832, 15: 0.12774, 20: 0.63879, 25: 4.25681}
+# With a 10-of-30 "anywhere on grid" trigger the low tier still lands reasonably often,
+# so it pays a modest-but-real amount rather than a token fraction of a cent; the payout
+# escalates sharply from tier 15+, where landing that many of one symbol is a genuine
+# (and, for 25+, extremely rare) event.
+_TIER_CURVE: Dict[int, float] = {10: 0.07652, 12: 0.22955, 15: 0.76516, 20: 3.8258, 25: 25.50535}
 _VALUE_FACTOR: Dict[str, float] = {
     "S1": 1.0, "S2": 1.4, "S3": 2.0, "S4": 2.8,
     "S5": 5.0, "S6": 8.0, "S7": 13.0, "S8": 20.0,
@@ -602,7 +603,7 @@ class VoidChronosEngine:
         for sym in PAYING_SYMBOLS:
             sym_positions = [i for i, c in enumerate(grid) if c is not None and c.symbol == sym]
             total_count = len(sym_positions) + len(wild_positions)
-            if total_count < 8:
+            if total_count < 10:
                 continue
             mult = _pay_multiplier(sym, total_count)
             if mult <= 0:
@@ -617,7 +618,7 @@ class VoidChronosEngine:
             all_win_positions.update(positions)
 
         # A pure wild win (8+ wilds with no matching paying symbol requirement)
-        if len(wild_positions) >= 8:
+        if len(wild_positions) >= 10:
             mult = _pay_multiplier(WILD, len(wild_positions))
             if mult > 0:
                 wins.append({
@@ -630,7 +631,7 @@ class VoidChronosEngine:
 
         # Scatter pay (scatters do not accept wild substitution)
         scat_positions = [i for i, c in enumerate(grid) if c is not None and c.symbol == SCATTER]
-        if len(scat_positions) >= 8:
+        if len(scat_positions) >= 10:
             mult = _pay_multiplier(SCATTER, len(scat_positions))
             if mult > 0:
                 wins.append({

@@ -11,7 +11,8 @@
     --teal:#14b8a6;
     --blue:#3b82f6;
     --gold:#f5c542;
-    --gold-dark:#c98a1c;
+    --gold-light:#ffe9a8;
+    --gold-dark:#a3730f;
     --magenta:#e347ff;
     --bg-0:#020309;
     --bg-1:#060a16;
@@ -36,49 +37,72 @@
   }
   #game-frame{
     position:relative;
-    width:min(96vw, 560px);
-    height:min(96vh, 920px);
+    width:min(96vw, 580px);
+    height:min(96vh, 940px);
     display:flex; flex-direction:column;
-    border:1px solid var(--panel-border);
-    border-radius:14px;
-    background:linear-gradient(180deg, #060c18 0%, #04070f 100%);
-    box-shadow:0 0 60px #00e5ff22, 0 0 120px #ffcc0011, inset 0 0 40px #00121f;
+    border:1px solid #2a1c05;
+    border-radius:16px;
+    background:linear-gradient(180deg, #081018 0%, #04070f 100%);
+    box-shadow:0 0 60px #00e5ff1c, 0 0 130px #ffcc0014, inset 0 0 46px #00121f;
     overflow:hidden;
   }
 
-  /* ---------- top HUD ---------- */
+  /* ---------- ornate header ---------- */
   #hud-top{
-    flex:0 0 auto;
-    display:flex; flex-direction:column; gap:4px;
-    padding:8px 10px 6px;
-    background:linear-gradient(180deg,#0a1120,#070c16);
-    border-bottom:1px solid var(--panel-border);
+    flex:0 0 auto; position:relative;
+    padding:12px 10px 10px;
+    background:radial-gradient(ellipse at 50% 0%, #10263c 0%, #060c16 75%);
+    border-bottom:2px solid var(--gold-dark);
+    box-shadow:0 2px 12px #000a;
     z-index:5;
   }
-  .brand-row{ display:flex; align-items:center; justify-content:space-between; }
-  .brand-mark{ display:flex; align-items:center; gap:8px; }
-  .brand-mark .gem{
-    width:16px; height:22px;
-    background:linear-gradient(160deg,#141425,#000);
-    clip-path:polygon(50% 0%, 100% 30%, 78% 100%, 22% 100%, 0% 30%);
-    box-shadow:0 0 8px var(--cyan), 0 0 4px var(--gold) inset;
+  .icon-corner-btn{
+    position:absolute; top:10px; width:30px; height:30px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #1a2740, #060c16 80%);
+    border:1px solid var(--gold-dark); color:var(--gold);
+    display:flex; align-items:center; justify-content:center; font-size:14px; cursor:pointer;
   }
-  .brand-mark span{
-    font-weight:700; letter-spacing:3px; font-size:13px;
-    background:linear-gradient(90deg, var(--cyan), var(--gold));
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-  }
+  .icon-corner-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  #btn-menu{ right:10px; }
   .demo-badge{
-    font-size:9px; letter-spacing:1px; padding:3px 7px; border-radius:20px;
+    position:absolute; left:10px; top:14px;
+    font-size:8px; letter-spacing:1px; padding:3px 7px; border-radius:20px;
     border:1px solid var(--gold-dark); color:var(--gold);
     background:#1a1204a0;
   }
-  .stats-row{ display:flex; gap:6px; }
-  .stat-box{
-    flex:1; background:#050a14; border:1px solid var(--panel-border); border-radius:8px;
-    padding:5px 8px; text-align:center;
+  .logo-wrap{ text-align:center; padding:2px 40px 4px; }
+  .logo-line1{
+    font-family:Georgia,'Times New Roman',serif; font-weight:700; font-size:26px; letter-spacing:6px;
+    background:linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 45%, var(--gold-dark) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 2px 0 #3a2400, 0 0 18px #f5c54255;
+    line-height:1;
   }
-  .stat-box .lbl{ font-size:8px; letter-spacing:1.5px; color:var(--text-dim); text-transform:uppercase; }
+  .logo-line2{
+    display:flex; align-items:center; justify-content:center; gap:4px;
+    font-family:Georgia,'Times New Roman',serif; font-weight:700; font-size:19px; letter-spacing:5px;
+    background:linear-gradient(180deg, #d7f7ff 0%, var(--cyan) 55%, #0891b2 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 2px 0 #002733, 0 0 16px #22e5ff55;
+    line-height:1; margin-top:2px;
+  }
+  .hourglass-glyph{
+    display:inline-block; width:14px; height:18px; position:relative; -webkit-text-fill-color:initial;
+    background:linear-gradient(180deg, var(--magenta), var(--gold));
+    clip-path:polygon(0 0,100% 0,58% 46%,100% 100%,0 100%,42% 46%);
+    filter:drop-shadow(0 0 5px #e347ffaa);
+  }
+  .subtitle-studio{
+    text-align:center; font-size:8px; letter-spacing:3px; color:#8fa8c4; margin-top:3px;
+  }
+  .stats-row{ display:flex; justify-content:space-between; gap:8px; margin-top:8px; padding:0 2px; }
+  .stat-box{
+    flex:1; position:relative; background:linear-gradient(180deg,#0c1626,#050a14);
+    border:1px solid var(--gold-dark); border-radius:7px;
+    padding:5px 6px; text-align:center;
+    box-shadow:inset 0 1px 0 #ffdf8a30, 0 2px 6px #0008;
+  }
+  .stat-box .lbl{ font-size:7.5px; letter-spacing:1.5px; color:var(--gold); text-transform:uppercase; opacity:.85; }
   .stat-box .val{ font-size:14px; font-weight:700; color:var(--text); }
   .stat-bet .val{ display:flex; align-items:center; justify-content:center; gap:6px; }
   .bet-btn{
@@ -87,51 +111,66 @@
     display:flex; align-items:center; justify-content:center; user-select:none;
   }
   .bet-btn:active{ transform:scale(0.9); }
-  .stat-mult{
-    background:linear-gradient(180deg,#0e1a0c,#050a14);
-    border:1px solid var(--gold-dark);
-  }
-  .stat-mult .val{
-    font-size:20px;
-    background:linear-gradient(90deg, var(--gold), #fff6d8, var(--gold));
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    text-shadow:0 0 12px #f5c54288;
-    transition:transform .15s ease;
-  }
-  .stat-mult.pulse .val{ transform:scale(1.35); }
   .mode-badge{
-    font-size:9px; letter-spacing:1px; color:var(--magenta); text-align:center; margin-top:2px;
+    font-size:8.5px; letter-spacing:1px; color:var(--magenta); text-align:center; margin-top:6px;
     display:none;
   }
   .mode-badge.show{ display:block; }
 
   /* ---------- canvas area ---------- */
-  #pixi-wrap{ position:relative; flex:1 1 auto; min-height:0; aspect-ratio:640/900; max-width:100%; max-height:100%; margin:0 auto; }
+  #pixi-wrap{ position:relative; flex:1 1 auto; min-height:0; aspect-ratio:640/740; max-width:100%; max-height:100%; margin:4px auto 0; }
   #pixi-container{ position:absolute; inset:0; }
   #pixi-container canvas{ width:100% !important; height:100% !important; display:block; }
 
+  /* ---------- global multiplier ribbon ---------- */
+  #gm-banner{
+    flex:0 0 auto; position:relative; margin:2px auto 4px; width:64%;
+    background:linear-gradient(180deg,#12280f,#050a08);
+    border:2px solid var(--gold-dark); border-radius:6px;
+    padding:4px 8px; text-align:center;
+    box-shadow:0 3px 10px #000a, inset 0 1px 0 #ffdf8a40;
+    clip-path:polygon(6% 0,94% 0,100% 50%,94% 100%,6% 100%,0 50%);
+  }
+  #gm-banner .lbl{ font-size:8px; letter-spacing:3px; color:var(--gold); opacity:.9; }
+  #gm-banner .val{
+    font-size:24px; font-weight:900; line-height:1.1;
+    background:linear-gradient(90deg, var(--gold), #fff6d8, var(--gold));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 14px #f5c54288;
+    transition:transform .15s ease;
+  }
+  #gm-banner.pulse .val{ transform:scale(1.3); }
+
   /* ---------- bottom HUD ---------- */
   #hud-bottom{
-    flex:0 0 auto; display:flex; align-items:center; gap:10px;
-    padding:10px 12px 14px; background:linear-gradient(0deg,#070c16,#0a1120);
-    border-top:1px solid var(--panel-border);
+    flex:0 0 auto; display:flex; align-items:center; justify-content:space-between; gap:6px;
+    padding:8px 12px 14px; background:linear-gradient(0deg,#050b12,#0a1120);
+    border-top:2px solid var(--gold-dark);
   }
-  .side-btn{
-    flex:1; padding:10px 4px; border-radius:10px; border:1px solid var(--panel-border);
-    background:#0e1626; color:var(--text); font-size:10px; letter-spacing:1px; font-weight:700;
-    cursor:pointer; text-transform:uppercase;
+  .icon-btn{
+    flex:0 0 auto; width:36px; height:36px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #16233a, #060c16 85%);
+    border:1px solid var(--panel-border); color:var(--text-dim); font-size:15px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
   }
-  .side-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .icon-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .readout-box{ flex:1; text-align:center; min-width:0; }
+  .readout-box .lbl{ font-size:8px; letter-spacing:2px; color:var(--text-dim); text-transform:uppercase; }
+  .readout-box .val{ font-size:14px; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   #btn-spin{
-    flex:0 0 auto; width:74px; height:74px; border-radius:50%;
+    flex:0 0 auto; width:66px; height:66px; border-radius:50%;
     background:radial-gradient(circle at 35% 30%, #2adfff, #0891b2 55%, #054554 100%);
-    border:3px solid #7de8ff; color:#02141a; font-weight:900; font-size:12px; letter-spacing:1px;
-    cursor:pointer; box-shadow:0 0 22px #22e5ff77, 0 4px 0 #045063;
+    border:3px solid var(--gold); color:#02141a; font-weight:900;
+    cursor:pointer; box-shadow:0 0 20px #22e5ff77, 0 4px 0 #045063;
     display:flex; align-items:center; justify-content:center; text-align:center;
+  }
+  #btn-spin .play-tri{
+    width:0; height:0; margin-left:4px;
+    border-top:11px solid transparent; border-bottom:11px solid transparent; border-left:18px solid #02141a;
   }
   #btn-spin:active{ transform:translateY(2px); box-shadow:0 0 16px #22e5ff55, 0 2px 0 #045063; }
   #btn-spin:disabled{ filter:grayscale(0.7) brightness(0.6); cursor:not-allowed; }
-  .side-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+  .icon-btn:disabled, #btn-spin:disabled{ pointer-events:none; }
 
   /* ---------- modal ---------- */
   .modal-overlay{
@@ -168,6 +207,17 @@
     background:#111a2b; border:1px solid var(--panel-border); color:var(--text-dim); cursor:pointer;
     font-size:11px; letter-spacing:1px;
   }
+  .pay-row{
+    display:flex; align-items:center; gap:10px; padding:7px 4px;
+    border-bottom:1px solid #16223a;
+  }
+  .pay-row .pay-dot{ width:22px; height:22px; border-radius:50%; flex:0 0 auto; border:1px solid #ffffff33; }
+  .pay-row .pay-name{ flex:0 0 84px; font-size:10.5px; font-weight:700; }
+  .pay-row .pay-tiers{ flex:1; font-size:9.5px; color:var(--text-dim); line-height:1.5; }
+  .pay-row .pay-tiers b{ color:var(--gold); font-weight:700; }
+  .rules-text{ font-size:11px; line-height:1.65; color:var(--text); }
+  .rules-text h3{ font-size:11px; color:var(--gold); letter-spacing:1px; margin:12px 0 4px; }
+  .rules-text h3:first-child{ margin-top:0; }
 
   /* ---------- intro ---------- */
   #intro-screen{
@@ -185,11 +235,14 @@
 <div id="app-root">
   <div id="game-frame">
 
-    <!-- ===== TOP HUD ===== -->
+    <!-- ===== ORNATE HEADER ===== -->
     <div id="hud-top">
-      <div class="brand-row">
-        <div class="brand-mark"><div class="gem"></div><span>VOID CHRONOS</span></div>
-        <div class="demo-badge" id="demo-badge">PLAY FOR FUN</div>
+      <div class="demo-badge" id="demo-badge">PLAY FOR FUN</div>
+      <button class="icon-corner-btn" id="btn-menu" title="Menú / Bonus Buy">⚙</button>
+      <div class="logo-wrap">
+        <div class="logo-line1">VOID</div>
+        <div class="logo-line2">CHR<span class="hourglass-glyph"></span>NOS</div>
+        <div class="subtitle-studio">OBSIDIAN PLAY</div>
       </div>
       <div class="stats-row">
         <div class="stat-box stat-balance">
@@ -204,10 +257,6 @@
             <span class="bet-btn" id="bet-inc">+</span>
           </div>
         </div>
-        <div class="stat-box stat-mult" id="mult-box">
-          <div class="lbl">Multiplicador Global</div>
-          <div class="val" id="val-mult">1x</div>
-        </div>
       </div>
       <div class="mode-badge" id="mode-badge">MODO ANTE BET · x3 · SCATTER TRIPLICADO</div>
     </div>
@@ -217,11 +266,25 @@
       <div id="pixi-container"></div>
     </div>
 
+    <!-- ===== GLOBAL MULTIPLIER RIBBON ===== -->
+    <div id="gm-banner">
+      <div class="lbl">GLOBAL MULTIPLIER</div>
+      <div class="val" id="val-mult">x1</div>
+    </div>
+
     <!-- ===== BOTTOM HUD ===== -->
     <div id="hud-bottom">
-      <button class="side-btn" id="btn-menu">Menú</button>
-      <button id="btn-spin">GIRAR</button>
-      <button class="side-btn" id="btn-buy">Bonus Buy</button>
+      <button class="icon-btn" id="btn-paytable" title="Pagos">👁</button>
+      <div class="readout-box">
+        <div class="lbl">Win</div>
+        <div class="val" id="val-win">0.00</div>
+      </div>
+      <button id="btn-spin" title="Girar"><span class="play-tri"></span></button>
+      <div class="readout-box">
+        <div class="lbl">Free Spins</div>
+        <div class="val" id="val-freespins">0</div>
+      </div>
+      <button class="icon-btn" id="btn-help" title="Reglas">?</button>
     </div>
 
     <!-- ===== BONUS BUY / MODE MODAL ===== -->
@@ -231,6 +294,25 @@
         <div class="sub">Selecciona un modo de apuesta o compra una función directamente. Saldo ficticio — Play for Fun.</div>
         <div id="mode-list"></div>
         <button class="modal-close" id="modal-close">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- ===== PAYTABLE MODAL ===== -->
+    <div class="modal-overlay" id="modal-paytable">
+      <div class="modal-box">
+        <h2>TABLA DE PAGOS</h2>
+        <div class="sub">Scatter Pays — 8+ símbolos iguales en cualquier parte de la grilla. Multiplicador del pago total en Free Spins.</div>
+        <div id="pay-list"></div>
+        <button class="modal-close" id="paytable-close">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- ===== RULES MODAL ===== -->
+    <div class="modal-overlay" id="modal-rules">
+      <div class="modal-box">
+        <h2>REGLAS DEL JUEGO</h2>
+        <div class="rules-text" id="rules-text"></div>
+        <button class="modal-close" id="rules-close">Cerrar</button>
       </div>
     </div>
 
@@ -580,8 +662,9 @@ const state = {
   spinning: false,
   globalMultiplier: 1,
   inFreeSpins: false,
-  fsRemaining: 0,
+  fsIndex: 0,
   fsTotal: 0,
+  runningWin: 0,
 };
 function currentBet(){ return BET_STEPS[state.betIndex]; }
 
@@ -592,10 +675,11 @@ const $ = sel => document.querySelector(sel);
 const elBalance = $("#val-balance");
 const elBet = $("#val-bet");
 const elMult = $("#val-mult");
-const elMultBox = $("#mult-box");
+const elMultBox = $("#gm-banner");
 const elModeBadge = $("#mode-badge");
+const elWin = $("#val-win");
+const elFreeSpins = $("#val-freespins");
 const btnSpin = $("#btn-spin");
-const btnBuy = $("#btn-buy");
 const btnMenu = $("#btn-menu");
 
 function fmt(n){
@@ -604,7 +688,8 @@ function fmt(n){
 function refreshHud(){
   elBalance.textContent = fmt(state.balance);
   elBet.textContent = fmt(currentBet());
-  elMult.textContent = state.globalMultiplier + "x";
+  elMult.textContent = "x" + state.globalMultiplier;
+  elFreeSpins.textContent = state.inFreeSpins ? state.fsIndex + "/" + state.fsTotal : "0";
   if (state.mode === "ANTE_BET"){
     elModeBadge.textContent = "MODO ANTE BET · x3 COSTO · SCATTER TRIPLICADO";
     elModeBadge.classList.add("show");
@@ -619,7 +704,7 @@ function pulseMultBox(){
 function setSpinning(v){
   state.spinning = v;
   btnSpin.disabled = v;
-  btnBuy.disabled = v;
+  btnMenu.disabled = v;
   document.getElementById("bet-inc").style.pointerEvents = v ? "none" : "auto";
   document.getElementById("bet-dec").style.pointerEvents = v ? "none" : "auto";
 }
@@ -660,10 +745,56 @@ function buildModeList(){
 }
 function openModal(){ buildModeList(); modalOverlay.classList.add("open"); }
 function closeModal(){ modalOverlay.classList.remove("open"); }
-btnBuy.onclick = openModal;
 btnMenu.onclick = openModal;
 $("#modal-close").onclick = closeModal;
 modalOverlay.addEventListener("click", e => { if (e.target === modalOverlay) closeModal(); });
+
+/* ---------------------------------------------------------------------------------------
+   5b) PAYTABLE MODAL
+   --------------------------------------------------------------------------------------- */
+const modalPaytable = $("#modal-paytable");
+const payList = $("#pay-list");
+function buildPaytable(){
+  payList.innerHTML = "";
+  const order = PAYING_SYMBOLS.concat([WILD, SCATTER]);
+  order.forEach(sym => {
+    const pal = PALETTE[sym];
+    const tiers = PAYTABLE[sym].slice().sort((a,b)=>a[0]-b[0]);
+    const row = document.createElement("div");
+    row.className = "pay-row";
+    const tiersText = tiers.map(([c,m]) => `<b>${c}+</b>: ${m.toFixed(2)}x`).join(" &nbsp;·&nbsp; ");
+    row.innerHTML = `
+      <div class="pay-dot" style="background:radial-gradient(circle at 35% 30%, #${pal.top.toString(16).padStart(6,'0')}, #${pal.bot.toString(16).padStart(6,'0')})"></div>
+      <div class="pay-name">${SYMBOL_NAMES[sym]}${sym===WILD?" (sustituye)":""}${sym===SCATTER?" (activa Free Spins)":""}</div>
+      <div class="pay-tiers">${tiersText}</div>`;
+    payList.appendChild(row);
+  });
+}
+$("#btn-paytable").onclick = () => { buildPaytable(); modalPaytable.classList.add("open"); };
+$("#paytable-close").onclick = () => modalPaytable.classList.remove("open");
+modalPaytable.addEventListener("click", e => { if (e.target === modalPaytable) modalPaytable.classList.remove("open"); });
+
+/* ---------------------------------------------------------------------------------------
+   5c) RULES MODAL
+   --------------------------------------------------------------------------------------- */
+const modalRules = $("#modal-rules");
+$("#rules-text").innerHTML = `
+  <h3>Scatter Pays &amp; Cascada</h3>
+  8 o más símbolos iguales en cualquier parte de la grilla 6x5 pagan. Los símbolos ganadores explotan y los nuevos caen desde arriba (tumble), pudiendo encadenar varias cascadas en un mismo giro.
+  <h3>Portal Wild</h3>
+  El símbolo Portal convierte 2-4 símbolos adyacentes en Wilds antes de evaluar los pagos.
+  <h3>Orb Collector (Free Spins)</h3>
+  Los Orbes con multiplicador (2x-1000x) aparecen durante los Free Spins. Cuando el símbolo Collector cae en la grilla, absorbe todos los orbes visibles y suma su valor al Multiplicador Global, que se mantiene durante todo el bonus.
+  <h3>Free Spins</h3>
+  4 Scatters otorgan 10 Free Spins · 5+ Scatters otorgan 12 Free Spins. Durante el bonus, 3+ Scatters retriggean +5 Free Spins adicionales.
+  <h3>Bonus Buy</h3>
+  Surge (x50), Standard Bonus (x100), Void Gates (x500) y Chronos Storm (x1000) compran acceso directo a los Free Spins con condiciones especiales. Ante Bet (x3) triplica la probabilidad de activación natural.
+  <h3>Max Win</h3>
+  El pago máximo está limitado a 20,000x la apuesta base.
+`;
+$("#btn-help").onclick = () => modalRules.classList.add("open");
+$("#rules-close").onclick = () => modalRules.classList.remove("open");
+modalRules.addEventListener("click", e => { if (e.target === modalRules) modalRules.classList.remove("open"); });
 
 function onModeCardClick(key){
   if (state.spinning) return;
@@ -690,12 +821,12 @@ function flashInsufficientFunds(){
 /* ---------------------------------------------------------------------------------------
    6) PIXI APP + VISUAL FACTORY
    --------------------------------------------------------------------------------------- */
-const CANVAS_W = 640, CANVAS_H = 900;
-const CELL_W = 108, CELL_H = 100, GAP = 6;
+const CANVAS_W = 640, CANVAS_H = 740;
+const CELL_W = 118, CELL_H = 106, GAP = 3;
 const GRID_W = COLS*CELL_W + (COLS-1)*GAP;
 const GRID_H = ROWS*CELL_H + (ROWS-1)*GAP;
 const GRID_X = (CANVAS_W - GRID_W) / 2;
-const GRID_Y = 96;
+const GRID_Y = 34;
 
 const app = new PIXI.Application({
   width: CANVAS_W, height: CANVAS_H, backgroundAlpha: 0,
@@ -714,31 +845,72 @@ function cellCenter(i){
   return { x: GRID_X + c*(CELL_W+GAP) + CELL_W/2, y: GRID_Y + r*(CELL_H+GAP) + CELL_H/2 };
 }
 
-/* --- background: deep space / void energy --- */
+/* --- background: deep void temple + ornate gold Art-Deco frame --- */
 function buildBackground(){
+  const cx = CANVAS_W/2, cy = GRID_Y + GRID_H/2;
+
   const g = new PIXI.Graphics();
-  g.beginFill(0x030510).drawRect(0,0,CANVAS_W,CANVAS_H).endFill();
-  // radial glow bands
-  for (let i=6;i>=1;i--){
-    g.beginFill(0x081b33, 0.05).drawCircle(CANVAS_W/2, GRID_Y+GRID_H/2, 60*i).endFill();
-  }
+  g.beginFill(0x03040a).drawRect(0,0,CANVAS_W,CANVAS_H).endFill();
   layerBg.addChild(g);
-  // frame around grid
+
+  // faint arcane mandala behind the grid (concentric rings + radial spokes)
+  const mandala = new PIXI.Graphics();
+  for (let r=GRID_H*0.62; r>40; r-=34){
+    mandala.lineStyle(1, 0x2fd8ff, 0.05).drawCircle(cx, cy, r);
+  }
+  for (let i=0;i<16;i++){
+    const a = i*(Math.PI*2/16);
+    mandala.lineStyle(1, 0xf5c542, 0.045)
+      .moveTo(cx, cy).lineTo(cx+Math.cos(a)*GRID_H*0.62, cy+Math.sin(a)*GRID_H*0.62);
+  }
+  layerBg.addChild(mandala);
+
+  // unified dark grid panel (single surface, not per-cell colour blocks)
+  const panelPad = 8;
+  const panel = new PIXI.Graphics();
+  panel.beginFill(0x050a12, 1)
+    .lineStyle(1, 0x0c1826, 1)
+    .drawRoundedRect(GRID_X-panelPad, GRID_Y-panelPad, GRID_W+panelPad*2, GRID_H+panelPad*2, 10)
+    .endFill();
+  // subtle inner vignette
+  panel.beginFill(0x000000, 0.35).drawRoundedRect(GRID_X-panelPad, GRID_Y-panelPad, GRID_W+panelPad*2, 40, 10).endFill();
+  layerBg.addChild(panel);
+
+  // thin gold cell dividers
+  const div = new PIXI.Graphics();
+  div.lineStyle(1, 0x3a2f14, 0.55);
+  for (let c=1;c<COLS;c++){
+    const x = GRID_X + c*(CELL_W+GAP) - GAP/2;
+    div.moveTo(x, GRID_Y).lineTo(x, GRID_Y+GRID_H);
+  }
+  for (let r=1;r<ROWS;r++){
+    const y = GRID_Y + r*(CELL_H+GAP) - GAP/2;
+    div.moveTo(GRID_X, y).lineTo(GRID_X+GRID_W, y);
+  }
+  layerBg.addChild(div);
+
+  // ---- ornate gold Art-Deco frame around the whole panel ----
+  const fx = GRID_X-panelPad-10, fy = GRID_Y-panelPad-10, fw = GRID_W+panelPad*2+20, fh = GRID_H+panelPad*2+20;
   const frame = new PIXI.Graphics();
-  frame.lineStyle(2, 0x18324a, 1);
-  frame.drawRoundedRect(GRID_X-10, GRID_Y-10, GRID_W+20, GRID_H+20, 16);
-  frame.lineStyle(1, 0x22e5ff, 0.35);
-  frame.drawRoundedRect(GRID_X-14, GRID_Y-14, GRID_W+28, GRID_H+28, 18);
+  frame.lineStyle(7, 0x2a1c05, 1).drawRoundedRect(fx, fy, fw, fh, 14);
+  frame.lineStyle(3, 0xb37a17, 1).drawRoundedRect(fx+2, fy+2, fw-4, fh-4, 12);
+  frame.lineStyle(1.4, 0xffe9a8, 0.9).drawRoundedRect(fx+5, fy+5, fw-10, fh-10, 10);
+  frame.lineStyle(1, 0x22e5ff, 0.3).drawRoundedRect(fx-4, fy-4, fw+8, fh+8, 16);
   layerBg.addChild(frame);
 
-  // slot backdrop cells (empty sockets) for premium feel
-  for (let i=0;i<GRID_CELLS;i++){
-    const {x,y} = cellCenter(i);
-    const socket = new PIXI.Graphics();
-    socket.beginFill(0x040910, 0.9).lineStyle(1, 0x14283e, 1)
-      .drawRoundedRect(x-CELL_W/2, y-CELL_H/2, CELL_W, CELL_H, 10).endFill();
-    layerBg.addChild(socket);
-  }
+  // corner gem ornaments
+  [[fx,fy],[fx+fw,fy],[fx,fy+fh],[fx+fw,fy+fh]].forEach(([ox,oy]) => {
+    const gem = new PIXI.Graphics();
+    gem.beginFill(0x2a1c05).lineStyle(1.5, 0xffe9a8, 1)
+      .drawPolygon(regularPolygonPoints(0,0,11,4,-Math.PI/2)).endFill();
+    gem.beginFill(0x22e5ff, 0.9).drawPolygon(regularPolygonPoints(0,0,5,4,-Math.PI/2)).endFill();
+    gem.x = ox; gem.y = oy;
+    const glow = new PIXI.Graphics();
+    glow.beginFill(0x22e5ff, 0.5).drawCircle(0,0,10).endFill();
+    glow.filters = [new PIXI.BlurFilter(6)];
+    gem.addChildAt(glow, 0);
+    layerBg.addChild(gem);
+  });
 }
 
 /* --- color palette per symbol --- */
@@ -762,18 +934,6 @@ function orbPalette(v){
   return {top:0x22e5ff, bot:0x0a5a75, icon:0xeafeff, glow:0x22e5ff};
 }
 
-function gradientRoundRect(g, w, h, colTop, colBot, radius){
-  const bands = 14;
-  for (let i=0;i<bands;i++){
-    const t = i/(bands-1);
-    const col = lerpColor(colTop, colBot, t);
-    const yTop = -h/2 + (h/bands)*i;
-    g.beginFill(col, 1).drawRect(-w/2, yTop, w, h/bands+1).endFill();
-  }
-  const mask = new PIXI.Graphics();
-  mask.beginFill(0xffffff).drawRoundedRect(-w/2,-h/2,w,h,radius).endFill();
-  return mask;
-}
 function lerpColor(a,b,t){
   const ar=(a>>16)&255, ag=(a>>8)&255, ab=a&255;
   const br=(b>>16)&255, bg=(b>>8)&255, bb=b&255;
@@ -799,128 +959,206 @@ function starPoints(cx,cy,rOuter,rInner,spikes,rotation=-Math.PI/2){
   return pts;
 }
 
+function crystalShard(g, x, y, h, w, rot, colTop, colBot){
+  g.beginFill(colTop);
+  const pts = [0,-h*0.55, w*0.36,-h*0.08, w*0.22,h*0.45, 0,h*0.55, -w*0.22,h*0.45, -w*0.36,-h*0.08];
+  const rotated = [];
+  for (let i=0;i<pts.length;i+=2){
+    const px=pts[i], py=pts[i+1];
+    rotated.push(x + px*Math.cos(rot)-py*Math.sin(rot), y + px*Math.sin(rot)+py*Math.cos(rot));
+  }
+  g.drawPolygon(rotated).endFill();
+  g.lineStyle(1.2, colBot, 0.7);
+  const hx = x + Math.cos(rot)*w*0.14, hy = y + Math.sin(rot)*w*0.14;
+  g.moveTo(x + (-Math.sin(rot))*(-h*0.4), y + (Math.cos(rot))*(-h*0.4)).lineTo(hx, hy);
+}
+
 function drawIcon(symbol, value){
   const g = new PIXI.Graphics();
   const pal = symbol===ORB ? orbPalette(value) : PALETTE[symbol];
   switch(symbol){
-    case "S1": // cyan shard - diamond
-      g.beginFill(pal.icon).drawPolygon(regularPolygonPoints(0,0,26,4,-Math.PI/2)).endFill();
-      g.lineStyle(2, pal.glow, 0.9).drawPolygon(regularPolygonPoints(0,0,26,4,-Math.PI/2));
+    case "S1": { // crystal cluster
+      crystalShard(g, -11, 6, 40, 20, -0.18, pal.icon, pal.glow);
+      crystalShard(g, 11, 8, 34, 17, 0.20, lerpColor(pal.icon,0xffffff,0.15), pal.glow);
+      crystalShard(g, 0, -4, 46, 22, 0, pal.icon, pal.glow);
+      g.lineStyle(1.3, 0xffffff, 0.55).moveTo(-2,-24).lineTo(2,4);
       break;
-    case "S2": // teal rune - hexagon + cross
-      g.beginFill(pal.icon).drawPolygon(regularPolygonPoints(0,0,25,6)).endFill();
-      g.lineStyle(2.5, pal.glow, 0.95).moveTo(-10,0).lineTo(10,0).moveTo(0,-10).lineTo(0,10);
+    }
+    case "S2": { // rune circle
+      g.lineStyle(4, pal.glow, 0.95).drawCircle(0,0,29);
+      g.lineStyle(1.3, pal.icon, 0.6).drawCircle(0,0,23);
+      g.lineStyle(3, pal.icon, 1)
+        .moveTo(0,-16).lineTo(0,16)
+        .moveTo(0,-16).lineTo(10,-6)
+        .moveTo(0,2).lineTo(10,16);
+      for (let i=0;i<8;i++){
+        const a = i*(Math.PI*2/8);
+        g.lineStyle(1.5, pal.glow, 0.6).moveTo(Math.cos(a)*29, Math.sin(a)*29).lineTo(Math.cos(a)*34, Math.sin(a)*34);
+      }
       break;
-    case "S3": // azure gem - pentagon
-      g.beginFill(pal.icon).drawPolygon(regularPolygonPoints(0,0,26,5,-Math.PI/2)).endFill();
-      g.lineStyle(2, pal.glow, 0.9).drawPolygon(regularPolygonPoints(0,-4,14,5,-Math.PI/2));
+    }
+    case "S3": { // faceted sapphire gem
+      const top=[0,-30], ring=regularPolygonPoints(0,-4,22,6,-Math.PI/2);
+      g.beginFill(pal.icon).drawPolygon([top[0],top[1], ring[2],ring[3], ring[4],ring[5]]).endFill();
+      g.beginFill(lerpColor(pal.icon,0x001033,0.3)).drawPolygon(ring).endFill();
+      g.lineStyle(1.2, 0xffffff, 0.55);
+      for (let i=0;i<6;i++) g.moveTo(0,-4).lineTo(ring[i*2], ring[i*2+1]);
+      g.lineStyle(1.5, pal.glow, 0.9).drawPolygon(ring);
       break;
-    case "S4": // gold coin
-      g.beginFill(pal.icon).drawCircle(0,0,25).endFill();
-      g.lineStyle(2.5, pal.glow, 1).drawCircle(0,0,18);
-      g.beginFill(pal.glow,0.9).drawPolygon(starPoints(0,0,8,3.5,5)).endFill();
+    }
+    case "S4": { // embossed gold coin
+      g.beginFill(pal.icon).drawCircle(0,0,29).endFill();
+      g.lineStyle(2, pal.bot, 0.8).drawCircle(0,0,29);
+      g.lineStyle(2.5, pal.glow, 1).drawCircle(0,0,22);
+      for (let i=0;i<20;i++){
+        const a = i*(Math.PI*2/20);
+        g.lineStyle(1.5, pal.bot, 0.5).moveTo(Math.cos(a)*29, Math.sin(a)*29).lineTo(Math.cos(a)*25.5, Math.sin(a)*25.5);
+      }
+      g.beginFill(pal.glow,0.95).drawPolygon(starPoints(0,0,10,4.4,5)).endFill();
+      g.beginFill(0xffffff,0.3).drawEllipse(-9,-11,8,5).endFill();
       break;
-    case "S5": // void eye
-      g.beginFill(pal.icon).drawEllipse(0,0,27,17).endFill();
-      g.beginFill(0x0b0018).drawCircle(0,0,10).endFill();
-      g.beginFill(pal.glow).drawCircle(0,0,5).endFill();
+    }
+    case "S5": { // arcane void eye
+      for (let i=0;i<10;i++){
+        const a = -Math.PI*0.82 + i*(Math.PI*0.64/9);
+        g.lineStyle(1.6, pal.glow, 0.55).moveTo(Math.cos(a)*23,Math.sin(a)*13).lineTo(Math.cos(a)*33,Math.sin(a)*20);
+      }
+      g.beginFill(pal.icon).drawEllipse(0,0,30,18).endFill();
+      g.lineStyle(1.4, pal.glow, 0.7).drawEllipse(0,0,30,18);
+      g.beginFill(0x0b0018).drawCircle(0,0,11).endFill();
+      g.beginFill(pal.glow).drawCircle(0,0,6).endFill();
+      g.beginFill(0xffffff,0.85).drawCircle(-2,-2,2).endFill();
       break;
-    case "S6": // portal core
-      g.lineStyle(4, pal.icon, 1).drawCircle(0,0,22);
-      g.lineStyle(3, pal.glow, 1).drawCircle(0,0,13);
-      g.beginFill(pal.icon,0.9).drawCircle(0,0,5).endFill();
+    }
+    case "S6": { // portal core - layered rings
+      g.lineStyle(5, pal.icon, 1).drawCircle(0,0,27);
+      g.lineStyle(3, pal.glow, 0.9).drawCircle(0,0,19);
+      g.lineStyle(2, pal.icon, 0.85).drawCircle(0,0,11);
+      g.beginFill(pal.glow,0.95).drawCircle(0,0,4).endFill();
+      for (let i=0;i<3;i++){
+        const a = i*(Math.PI*2/3) + 0.4;
+        g.beginFill(pal.icon,0.9).drawCircle(Math.cos(a)*27, Math.sin(a)*27, 3).endFill();
+      }
       break;
-    case "S7": { // chronos gear
-      const teeth = 8;
+    }
+    case "S7": { // chronos gear with jewel
+      const teeth = 10;
       g.beginFill(pal.icon);
       for (let i=0;i<teeth;i++){
         const a = i*(Math.PI*2/teeth);
-        const cx=Math.cos(a)*22, cy=Math.sin(a)*22;
-        g.drawRect(cx-4,cy-4,8,8);
+        const px=Math.cos(a)*25, py=Math.sin(a)*25;
+        g.drawRect(px-4.5,py-4.5,9,9);
       }
       g.endFill();
-      g.beginFill(pal.icon).drawCircle(0,0,17).endFill();
-      g.beginFill(0x1a1000).drawCircle(0,0,7).endFill();
+      g.beginFill(pal.icon).drawCircle(0,0,19).endFill();
+      g.lineStyle(1.4, pal.bot, 0.6).drawCircle(0,0,19);
+      g.beginFill(0x1a1000).drawCircle(0,0,9).endFill();
+      g.beginFill(pal.glow).drawPolygon(regularPolygonPoints(0,0,5.5,6)).endFill();
       break;
     }
-    case "S8": // obsidian skull
-      g.beginFill(pal.icon).drawRoundedRect(-18,-20,36,30,14).endFill();
-      g.beginFill(pal.icon).drawPolygon([-14,8, -4,8, -9,22]).endFill();
-      g.beginFill(pal.icon).drawPolygon([4,8, 14,8, 9,22]).endFill();
-      g.beginFill(pal.glow).drawCircle(-8,-6,5).endFill();
-      g.beginFill(pal.glow).drawCircle(8,-6,5).endFill();
-      break;
-    case "WILD": {
-      g.beginFill(pal.icon).drawPolygon(starPoints(0,0,28,12,8)).endFill();
-      g.lineStyle(2, pal.bot, 0.8).drawPolygon(starPoints(0,0,28,12,8));
+    case "S8": { // obsidian skull, gold-rimmed
+      g.beginFill(pal.icon).lineStyle(1.6, 0xd4941e, 0.9).drawRoundedRect(-19,-22,38,32,15).endFill();
+      g.beginFill(pal.icon).lineStyle(1.6, 0xd4941e, 0.9).drawPolygon([-15,7, -4,7, -9,23]).endFill();
+      g.beginFill(pal.icon).lineStyle(1.6, 0xd4941e, 0.9).drawPolygon([4,7, 15,7, 9,23]).endFill();
+      g.lineStyle(0);
+      g.beginFill(0x000000,0.5).drawEllipse(-8,-6,7,8).endFill();
+      g.beginFill(0x000000,0.5).drawEllipse(8,-6,7,8).endFill();
+      g.beginFill(pal.glow).drawCircle(-8,-6,4.5).endFill();
+      g.beginFill(pal.glow).drawCircle(8,-6,4.5).endFill();
+      g.beginFill(0xffffff,0.9).drawCircle(-8,-7.5,1.4).endFill();
+      g.beginFill(0xffffff,0.9).drawCircle(8,-7.5,1.4).endFill();
+      g.beginFill(0x000000,0.4).drawPolygon([0,-2,-3,7,3,7]).endFill();
       break;
     }
-    case "SCAT": { // hourglass void portal
-      g.lineStyle(3, pal.glow, 1).drawCircle(0,0,27);
+    case "WILD": { // ornate rosette / compass emblem
+      g.beginFill(pal.icon).drawPolygon(starPoints(0,0,32,13,8)).endFill();
+      g.lineStyle(2, pal.bot, 0.85).drawPolygon(starPoints(0,0,32,13,8));
+      g.lineStyle(1.6, pal.bot, 0.9).drawCircle(0,0,15);
+      g.beginFill(pal.bot).drawPolygon(regularPolygonPoints(0,0,8,4,-Math.PI/2)).endFill();
+      const wt = new PIXI.Text("W", { fontFamily:"Georgia,serif", fontWeight:"900", fontSize:13, fill:0xfff6d8 });
+      wt.anchor.set(0.5); g.addChild(wt);
+      break;
+    }
+    case "SCAT": { // winged hourglass void portal (hero icon)
+      g.lineStyle(2.4, pal.glow, 0.9).drawCircle(0,0,32);
+      // wings
+      [-1,1].forEach(side => {
+        g.beginFill(pal.top, 0.9);
+        g.drawPolygon([side*14,-4, side*34,-16, side*30,-2, side*36,6, side*22,6, side*14,10]);
+        g.endFill();
+      });
+      // hourglass body
       g.beginFill(pal.icon)
-        .drawPolygon([-16,-20, 16,-20, 3,0, 16,20, -16,20, -3,0])
+        .lineStyle(1.6, 0xffe9a8, 0.9)
+        .drawPolygon([-15,-19, 15,-19, 3,0, 15,19, -15,19, -3,0])
         .endFill();
-      g.lineStyle(2, pal.bot, 1).moveTo(-3,0).lineTo(3,0);
+      g.lineStyle(0);
+      g.beginFill(0x3a0a44, 0.9).drawPolygon([-11,-15, 11,-15, 0,-2]).endFill();
+      g.beginFill(0x3a0a44, 0.9).drawPolygon([-11,15, 11,15, 0,2]).endFill();
+      g.lineStyle(1.5, pal.glow, 1).moveTo(-3,0).lineTo(3,0);
       break;
     }
-    case "PORTAL": {
-      g.lineStyle(4, pal.top, 1).drawCircle(0,0,24);
-      g.lineStyle(3, pal.bot, 0.9).drawCircle(0,0,15);
-      g.lineStyle(2, pal.icon, 0.8).drawCircle(0,0,7);
+    case "PORTAL": { // unstable swirling rift
+      g.lineStyle(4.5, pal.top, 1).drawCircle(0,0,26);
+      g.lineStyle(2.5, pal.bot, 0.9).drawCircle(0,0,17);
+      g.lineStyle(1.6, pal.icon, 0.85).drawCircle(0,0,8);
+      g.lineStyle(1.4, 0xffffff, 0.5)
+        .moveTo(-18,-10).lineTo(-4,2).lineTo(-14,14)
+        .moveTo(16,-14).lineTo(6,-2).lineTo(18,10);
       break;
     }
-    case "COLLECT": {
-      g.beginFill(pal.icon).drawCircle(0,0,14).endFill();
+    case "COLLECT": { // void collector orb
+      g.beginFill(0x02040a).lineStyle(1.4, pal.glow, 0.9).drawCircle(0,0,17).endFill();
+      g.beginFill(pal.glow, 0.9).drawPolygon(regularPolygonPoints(0,0,5,4,-Math.PI/2)).endFill();
       for (let i=0;i<8;i++){
         const a = i*(Math.PI*2/8);
-        g.lineStyle(2.5, pal.glow, 0.9)
-          .moveTo(Math.cos(a)*26, Math.sin(a)*26)
-          .lineTo(Math.cos(a)*16, Math.sin(a)*16);
+        g.lineStyle(2.2, pal.glow, 0.85)
+          .moveTo(Math.cos(a)*30, Math.sin(a)*30)
+          .lineTo(Math.cos(a)*18, Math.sin(a)*18);
       }
       break;
     }
     case "ORB": {
+      g.beginFill(pal.bot).drawCircle(0,0,27).endFill();
       g.beginFill(pal.icon).drawCircle(0,0,24).endFill();
-      g.beginFill(0xffffff, 0.35).drawEllipse(-7,-9,9,6).endFill();
       g.lineStyle(2, pal.glow, 1).drawCircle(0,0,24);
+      g.beginFill(0xffffff, 0.4).drawEllipse(-8,-10,9,6).endFill();
+      g.beginFill(0xffffff, 0.15).drawEllipse(6,8,10,5).endFill();
       break;
     }
   }
   return g;
 }
 
-/* --- one grid tile: background gem + icon + glow + label --- */
+/* --- one grid tile: soft glow backdrop + detailed icon + label (sits on the unified panel) --- */
 function buildTile(symbol, value){
   const c = new PIXI.Container();
   const pal = symbol===ORB ? orbPalette(value) : PALETTE[symbol];
 
-  const bgHolder = new PIXI.Graphics();
-  const mask = gradientRoundRect(bgHolder, CELL_W-6, CELL_H-6, pal.top, pal.bot, 12);
-  bgHolder.mask = mask;
-  c.addChild(bgHolder, mask);
+  // soft radial backdrop glow (keeps symbols readable on the shared dark panel without hard tile borders)
+  const backdrop = new PIXI.Graphics();
+  backdrop.beginFill(pal.glow, 0.16).drawCircle(0,0,Math.min(CELL_W,CELL_H)*0.46).endFill();
+  backdrop.filters = [new PIXI.BlurFilter(10)];
+  c.addChild(backdrop);
 
-  const border = new PIXI.Graphics();
-  border.lineStyle(1.4, pal.glow, 0.85).drawRoundedRect(-(CELL_W-6)/2,-(CELL_H-6)/2,CELL_W-6,CELL_H-6,12);
-  c.addChild(border);
-
-  // glow (blurred duplicate icon behind)
+  // outer glow (blurred duplicate icon behind)
   const glow = drawIcon(symbol, value);
-  glow.filters = [new PIXI.BlurFilter(6)];
-  glow.tint = pal.glow; glow.alpha = 0.7; glow.scale.set(1.15);
+  glow.filters = [new PIXI.BlurFilter(7)];
+  glow.tint = pal.glow; glow.alpha = 0.65; glow.scale.set(1.18);
   c.addChild(glow);
 
   const icon = drawIcon(symbol, value);
   c.addChild(icon);
 
   if (symbol === ORB){
-    const t = new PIXI.Text((value||0)+"x", { fontFamily:"Segoe UI", fontWeight:"800", fontSize:15, fill: value>=500?0xffe4f2:(value>=50?0x3a2400:0x00323c), stroke:0xffffff, strokeThickness:0 });
-    t.anchor.set(0.5); t.y = 26;
+    const t = new PIXI.Text((value||0)+"x", { fontFamily:"Georgia,serif", fontWeight:"800", fontSize:15, fill: value>=500?0xffe4f2:(value>=50?0x3a2400:0x00323c) });
+    t.anchor.set(0.5); t.y = 32;
     c.addChild(t);
   }
   if (symbol === SCATTER || symbol === WILD || symbol === PORTAL || symbol === COLLECTOR){
     const label = symbol===SCATTER?"SCATTER":symbol===WILD?"WILD":symbol===PORTAL?"PORTAL":"COLLECT";
     const t = new PIXI.Text(label, { fontFamily:"Segoe UI", fontWeight:"800", fontSize:8, letterSpacing:1, fill:0xffffff });
-    t.anchor.set(0.5); t.y = CELL_H/2 - 12;
+    t.anchor.set(0.5); t.y = CELL_H/2 - 13;
     c.addChild(t);
   }
 
@@ -1245,16 +1483,10 @@ function spawnIntroSparks(introApp, cx, cy){
 }
 
 /* ---------------------------------------------------------------------------------------
-   9) TOP-BANNER GLOBAL MULTIPLIER (in-canvas, shown during Free Spins)
+   9) FREE SPINS READOUT (HTML box in the bottom bar)
    --------------------------------------------------------------------------------------- */
-const fsInfoText = new PIXI.Text("", {
-  fontFamily:"Segoe UI", fontWeight:"800", fontSize:14, letterSpacing:1, fill:0xffe27a,
-});
-fsInfoText.anchor.set(0.5,0);
-fsInfoText.x = CANVAS_W/2; fsInfoText.y = 8;
-layerBanner.addChild(fsInfoText);
 function updateFsInfo(){
-  fsInfoText.text = state.inFreeSpins ? `FREE SPINS  ${state.fsTotal-state.fsRemaining+1} / ${state.fsTotal}` : "";
+  elFreeSpins.textContent = state.inFreeSpins ? `${state.fsIndex}/${state.fsTotal}` : "0";
 }
 
 /* ---------------------------------------------------------------------------------------
@@ -1293,7 +1525,11 @@ async function playCascadeStep(entry){
   if (entry.wins && entry.wins.length){
     const totalStepPay = entry.wins.reduce((s,w)=>s+w.pay, 0);
     entry.wins.forEach(w => highlightWin(w.positions));
-    if (totalStepPay > 0) floatingWinText(totalStepPay / state.currentBetRef);
+    if (totalStepPay > 0){
+      floatingWinText(totalStepPay / state.currentBetRef);
+      state.runningWin += totalStepPay;
+      elWin.textContent = fmt(state.runningWin);
+    }
     await wait(520);
   }
 
@@ -1310,7 +1546,7 @@ async function playCascadeStep(entry){
     await Promise.all(proms);
     if (collectorTile) spawnBurst(collectorTile.x, collectorTile.y, 0x22e5ff, 26);
     state.globalMultiplier += oe.collectedTotal;
-    elMult.textContent = state.globalMultiplier + "x";
+    elMult.textContent = "x" + state.globalMultiplier;
     pulseMultBox();
     await showBanner("ORBE ABSORBIDO", 0x22e5ff, 500, "+" + oe.collectedTotal + "x GLOBAL");
   }
@@ -1341,6 +1577,8 @@ async function runSpin(forceMode){
   setSpinning(true);
   state.balance -= cost;
   state.currentBetRef = bet;
+  state.runningWin = 0;
+  elWin.textContent = fmt(0);
   refreshHud();
 
   const result = engineSpin(bet, mode);
@@ -1363,6 +1601,8 @@ async function runSpin(forceMode){
   state.balance += result.totalWin;
   state.globalMultiplier = 1;
   state.inFreeSpins = false;
+  state.runningWin = result.totalWin;
+  elWin.textContent = fmt(result.totalWin);
   updateFsInfo();
   refreshHud();
 
@@ -1382,15 +1622,16 @@ async function playBonusBuyIntro(mode){
 async function runFreeSpinsSequence(fsData, bet){
   state.inFreeSpins = true;
   state.fsTotal = fsData.initialSpinsAwarded;
-  state.fsRemaining = fsData.spinsPlayed;
+  state.fsIndex = 0;
   state.globalMultiplier = fsData.globalMultiplierStart;
-  elMult.textContent = state.globalMultiplier + "x";
+  elMult.textContent = "x" + state.globalMultiplier;
   refreshHud();
 
   let spinsAwardedSoFar = fsData.initialSpinsAwarded;
 
   for (let i=0;i<fsData.spins.length;i++){
     const seq = fsData.spins[i];
+    state.fsIndex = i + 1;
     state.fsTotal = spinsAwardedSoFar;
     updateFsInfo();
     await playSpinSequence(seq, true);
@@ -1399,8 +1640,8 @@ async function runFreeSpinsSequence(fsData, bet){
       await showBanner("RETRIGGER!", 0xff8a3d, 800, "+" + RETRIGGER_SPINS + " FREE SPINS");
     }
   }
+  state.inFreeSpins = false;
   updateFsInfo();
-  fsInfoText.text = "";
 }
 
 btnSpin.onclick = () => runSpin(null);

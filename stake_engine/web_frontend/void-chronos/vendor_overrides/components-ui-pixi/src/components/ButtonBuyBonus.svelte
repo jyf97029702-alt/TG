@@ -1,16 +1,17 @@
 <script lang="ts">
-	import { Text } from 'pixi-svelte';
+	import { Text, Sprite } from 'pixi-svelte';
 	import { Button, type ButtonProps } from 'components-pixi';
 	import { stateModal, stateBet, stateBetDerived } from 'state-shared';
 
-	import UiSprite from './UiSprite.svelte';
 	import { UI_BASE_FONT_SIZE, UI_BASE_SIZE } from '../constants';
 	import { getContext } from '../context';
 	import { i18nDerived } from '../i18n/i18nDerived';
 
 	const props: Partial<Omit<ButtonProps, 'children'>> = $props();
 	const { stateXstateDerived, eventEmitter } = getContext();
-	const sizes = { width: UI_BASE_SIZE * 1.15, height: UI_BASE_SIZE * 1.15 };
+	// bigger than the other HUD buttons on purpose -- AI-generated treasure chest art
+	// (see stake_engine/README.md), replacing the plain gold rounded-rect background
+	const sizes = { width: UI_BASE_SIZE * 2, height: UI_BASE_SIZE * 2 };
 	const disabled = $derived(!stateXstateDerived.isIdle());
 	const active = $derived(stateBetDerived.activeBetMode()?.type === 'activate');
 
@@ -49,29 +50,30 @@
 			pressed,
 		})}
 
-		<UiSprite
-			key="buyBonus"
+		<Sprite
+			key="vcBuyBonusChest"
 			{...center}
 			anchor={0.5}
 			width={sizes.width}
 			height={sizes.height}
-			backgroundColor={disabled ? 0xaaaaaa : 0xe0a736}
-			borderWidth={active ? 10 : 5}
-			borderColor={active ? 0xffffff : 0xffe9a8}
+			alpha={disabled ? 0.5 : 1}
+			tint={active ? 0xffe9a8 : 0xffffff}
 		/>
 
 		<Text
 			{...center}
+			y={center.y + sizes.height * 0.42}
 			anchor={0.5}
 			text={state === 'active' ? i18nDerived.disable() : i18nDerived.buyBonus()}
 			style={{
 				align: 'center',
 				wordWrap: true,
-				wordWrapWidth: 200,
+				wordWrapWidth: sizes.width,
 				fontFamily: 'proxima-nova',
 				fontWeight: '800',
-				fontSize: UI_BASE_FONT_SIZE,
-				fill: disabled ? 0x555555 : 0x2a1600,
+				fontSize: UI_BASE_FONT_SIZE * 1.1,
+				fill: 0xffe9a8,
+				stroke: { color: 0x2a1600, width: 4 },
 			}}
 		/>
 	{/snippet}

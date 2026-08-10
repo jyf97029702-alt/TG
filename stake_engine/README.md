@@ -91,14 +91,13 @@ their `apps/scatter` template) and wired up to VOID CHRONOS's own mechanics:
   `orbCollectorInfo` (Orb Collector pickup + global multiplier update). See
   `void_chronos/game_events.py`'s `send_portal_wild_event` /
   `send_orb_collector_event` for what emits them.
-- `src/components/SymbolGraphic.svelte` — symbol rendering is a **hybrid**: `P`
-  (Portal) and `S4`-`S8` render real AI-generated art (`static/assets/generatedArt/`,
-  registered in `src/game/assets.ts` as `vcPortalCircle`/`vcRune`/`vcCrystal`/
-  `vcGemPurple`/`vcClock`/`vcSkull`) via `<Sprite>`; `S1`-`S3`, `W`, `SC`, `C`, `O`
-  still fall back to the original procedural `PIXI.Graphics` icons (`SYMBOL_ART_KEY`
-  at the top of the file controls which symbols use real art — extending it to the
-  rest just needs more generated images dropped into `generatedArt/` and registered
-  the same way).
+- `src/components/SymbolGraphic.svelte` — all 12 symbols render real AI-generated art
+  (`static/assets/generatedArt/`, registered in `src/game/assets.ts`) via `<Sprite>`,
+  through the `SYMBOL_ART_KEY` map at the top of the file. Only `O` (Orb) still uses
+  the original procedural `PIXI.Graphics` icon, since its art needs to support a
+  multiplier value text overlay that differs per tier (2x/25x/100x/1000x) — dropping
+  in 4 more generated images (one per tier) and branching on `value` the way
+  `orbPalette()` already does would finish that one too.
 - `src/components/BoardFrame.svelte` — uses the real `frame.webp` art instead of the
   template's placeholder frame sprite. Sized off the board's actual width **and**
   height independently (the stock template's frame math assumed a wider-than-tall
@@ -113,26 +112,36 @@ their `apps/scatter` template) and wired up to VOID CHRONOS's own mechanics:
   background animation with the real `background.webp` tileable starfield art.
 - `src/components/LoadingScreen.svelte` — shows the real `logo.webp` in place of the
   template's spine title animation.
-- `static/assets/generatedArt/` — the 10 AI-generated source images (logo, board
-  frame, background, and 6 symbol icons, plus `portal_big.webp` — a large winged
-  hourglass/portal feature-art piece not wired into any component yet, a good
-  candidate for the free-spin trigger celebration screen). The symbol/frame images
-  have no alpha channel out of the generator, so they're run through a cutout pass
-  that samples each image's own background color and flood-fills outward from the
-  image's corners and center to find the true background region (a plain per-pixel
-  luminance threshold left a semi-opaque haze near the border from the art's own
-  ambient-occlusion vignette, which visibly darkened the board through the frame
-  until this was tightened). `logo.webp` and `background.webp` are left as opaque
-  full-bleed images on purpose.
+- `static/assets/generatedArt/` — 17 AI-generated source images: logo, board frame,
+  background, all 12 non-Orb symbol icons, `buybonus_chest.webp` (the Buy Bonus
+  button art), and `portal_big.webp` — a large winged hourglass/portal feature-art
+  piece not wired into any component yet, a good candidate for the free-spin trigger
+  celebration screen. The symbol/frame/button images have no alpha channel out of
+  the generator, so they're run through a cutout pass that samples each image's own
+  background color and flood-fills outward from the image's corners and center to
+  find the true background region (a plain per-pixel luminance threshold left a
+  semi-opaque haze near the border from the art's own ambient-occlusion vignette,
+  which visibly darkened the board through the frame until this was tightened).
+  `logo.webp` and `background.webp` are left as opaque full-bleed images on purpose.
 - `vendor_overrides/components-ui-pixi/` — two files from web-sdk's **shared**
   `packages/components-ui-pixi` (used by every game in the monorepo, not something
-  this app folder can override on its own): `ButtonBuyBonus.svelte` (bigger, gold/
-  amber styling so it actually stands out from the other gray HUD buttons — it
-  previously used the exact same neutral gray as Menu/Autospin/Turbo) and
-  `LayoutDesktop.svelte` (bumped the Balance/Win/Bet labels' scale and gave them a
-  bit more vertical clearance from the button row below). See "How to run it" for
-  where these go — they're not part of `apps/void-chronos` itself and won't do
-  anything sitting in this folder.
+  this app folder can override on its own):
+  - `ButtonBuyBonus.svelte` — renders the real `buybonus_chest.webp` art at 2x the
+    size of the other HUD buttons (it previously used a plain gold rounded rectangle
+    — `UiSprite.svelte`'s default, since the template's own comment literally says
+    `<!-- ADD YOUR DESIGN -->` where the real art was meant to go).
+  - `LayoutDesktop.svelte` — moved Buy Bonus out of the row of small icon buttons
+    entirely and into its own large, centered slot sitting against the board's
+    bottom edge (between the reels and the Balance/Win/Bet row), and bumped the
+    Balance/Win/Bet labels' own scale with more vertical clearance from the button
+    row below them.
+
+  Both were tuned and screenshot-verified specifically against `LAYOUT_COMPONENT_MAP`'s
+  `desktop` case (`canvasRatio >= 1.3`, i.e. a normal wide browser window — see
+  `packages/utils-layout/src/createLayout.svelte.ts`). `LayoutPortrait`/
+  `LayoutLandscape`/`LayoutTablet` (narrower/mobile viewports) still use the stock
+  template's Buy Bonus position/sizing; the same idea applies there but each file
+  has its own hardcoded pixel layout, so it isn't a shared fix.
 
 ### How to run it
 
@@ -184,14 +193,6 @@ register them in `SymbolGraphic.svelte`'s `SYMBOL_ART_KEY` map + `assets.ts` to
 finish full coverage. `portal_big.webp` (the winged hourglass artifact) is generated
 but not placed yet — a natural fit for the free-spin trigger celebration screen
 (`FreeSpinIntro.svelte`).
-
-The `ButtonBuyBonus`/`LayoutDesktop` HUD tweaks (see `vendor_overrides/` above) were
-verified against `LayoutDesktop` only, which is what a normal wide desktop browser
-window renders. `LayoutPortrait`/`LayoutLandscape`/`LayoutTablet` (mobile/narrow
-viewports) still use the stock template's sizing/spacing for the Balance/Win/Bet
-labels and Buy Bonus button — same idea (bump the label `scale`, give Buy Bonus its
-own color instead of matching Menu/Autospin/Turbo) needs repeating there, each file
-has its own hardcoded pixel positions so it isn't a shared fix.
 
 **Not done:** sound design (reuses the template's placeholder SFX), win/tumble/
 free-spin celebration screens still use the template's stock spine animations

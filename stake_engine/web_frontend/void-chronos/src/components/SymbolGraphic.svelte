@@ -128,15 +128,22 @@
 		return (name === 'O' ? orbPalette(value ?? 2) : (PALETTE[name] ?? PALETTE.S1)).glow;
 	}
 
-	// AI-generated art available for these symbols (see stake_engine/README.md) -- the rest
-	// (S1, S2, S3, W, SC, C, O) still use the procedural PIXI.Graphics icons above.
+	// AI-generated art available for these symbols (see stake_engine/README.md) -- only O
+	// (Orb) still uses the procedural PIXI.Graphics icon above, since its art needs to
+	// support the multiplier value text overlay differently per tier.
 	export const SYMBOL_ART_KEY: Record<string, string> = {
+		S1: 'vcDiamond',
+		S2: 'vcHexagon',
+		S3: 'vcPentagon',
 		S4: 'vcRune',
 		S5: 'vcCrystal',
 		S6: 'vcGemPurple',
 		S7: 'vcClock',
 		S8: 'vcSkull',
+		W: 'vcEye',
+		SC: 'vcStar',
 		P: 'vcPortalCircle',
+		C: 'vcUrn',
 	};
 </script>
 

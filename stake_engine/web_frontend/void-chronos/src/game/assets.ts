@@ -323,4 +323,39 @@ export default {
 		src: new URL('../../assets/generatedArt/rune.webp', import.meta.url).href,
 		preload: true,
 	},
+	vcBuyBonusChest: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/buybonus_chest.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcDiamond: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/s1_diamond.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcHexagon: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/s2_hexagon.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcPentagon: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/s3_pentagon.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcEye: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/w_eye.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcStar: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/sc_star.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcUrn: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/c_urn.webp', import.meta.url).href,
+		preload: true,
+	},
 } as const;

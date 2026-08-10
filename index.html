@@ -2362,7 +2362,7 @@ function drawIcon(symbol, value){
   if (tex){
     const spr = new PIXI.Sprite(tex);
     spr.anchor.set(0.5);
-    spr.width = 92; spr.height = 92;
+    spr.width = 102; spr.height = 102;
     return spr;
   }
   const g = new PIXI.Graphics();
@@ -2549,7 +2549,7 @@ function buildTile(symbol, value){
   if (symbol === SCATTER || symbol === WILD || symbol === PORTAL || symbol === COLLECTOR){
     const label = symbol===SCATTER?"SCATTER":symbol===WILD?"WILD":symbol===PORTAL?"PORTAL":"COLLECT";
     const t = new PIXI.Text(label, { fontFamily:"Segoe UI", fontWeight:"800", fontSize:8, letterSpacing:1, fill:0xffffff });
-    t.anchor.set(0.5); t.y = CELL_H/2 - 13;
+    t.anchor.set(0.5); t.y = CELL_H/2 - 8;
     c.addChild(t);
   }
 

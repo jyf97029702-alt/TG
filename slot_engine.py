@@ -98,6 +98,9 @@ ORB_VALUES = [2, 5, 10, 25, 50, 100, 500, 1000]
 ORB_WEIGHTS = [300, 240, 170, 110, 65, 30, 8, 2]
 
 MAX_WIN_MULT = 20000.0  # cap, expressed as a multiple of the base bet
+MAX_GLOBAL_MULT = 2000.0  # cap on the accumulating Global Multiplier itself, so orb
+# collection can't inflate it into implausible five-figure numbers on a spin that
+# never actually pays anything
 
 # Reel weights used for the base game (no ORB / COLLECT, they are Free Spins only).
 # Weights are calibrated (see run_simulation) so that no single symbol dominates the
@@ -462,7 +465,7 @@ class VoidChronosEngine:
 
             orb_event = self._apply_orb_collector(grid)
             if orb_event is not None:
-                global_multiplier += orb_event["collected_total"]
+                global_multiplier = min(global_multiplier + orb_event["collected_total"], MAX_GLOBAL_MULT)
 
             win_pay = win_pay_raw * global_multiplier
             spin_win += win_pay

@@ -127,10 +127,21 @@
 	export function symbolGlowColor(name: string, value?: number): number {
 		return (name === 'O' ? orbPalette(value ?? 2) : (PALETTE[name] ?? PALETTE.S1)).glow;
 	}
+
+	// AI-generated art available for these symbols (see stake_engine/README.md) -- the rest
+	// (S1, S2, S3, W, SC, C, O) still use the procedural PIXI.Graphics icons above.
+	export const SYMBOL_ART_KEY: Record<string, string> = {
+		S4: 'vcRune',
+		S5: 'vcCrystal',
+		S6: 'vcGemPurple',
+		S7: 'vcClock',
+		S8: 'vcSkull',
+		P: 'vcPortalCircle',
+	};
 </script>
 
 <script lang="ts">
-	import { Container, Graphics, Text } from 'pixi-svelte';
+	import { Container, Graphics, Sprite, Text } from 'pixi-svelte';
 	import type { RawSymbol } from '../game/types';
 
 	type Props = { x?: number; y?: number; rawSymbol: RawSymbol };
@@ -139,6 +150,7 @@
 	const name = $derived(props.rawSymbol.name as string);
 	const value = $derived(props.rawSymbol.multiplier);
 	const glow = $derived(symbolGlowColor(name, value));
+	const artKey = $derived(SYMBOL_ART_KEY[name]);
 	const label = $derived(
 		name === 'SC' ? 'SCATTER' : name === 'W' ? 'WILD' : name === 'P' ? 'PORTAL' : name === 'C' ? 'COLLECT' : '',
 	);
@@ -152,8 +164,12 @@
 		}}
 		filters={[new PIXI.BlurFilter({ strength: 8 })]}
 	/>
-	<Graphics draw={(g) => drawSymbolIcon(g, name, value)} tint={glow} alpha={0.55} scale={1.15} />
-	<Graphics draw={(g) => drawSymbolIcon(g, name, value)} />
+	{#if artKey}
+		<Sprite key={artKey} anchor={0.5} width={76} height={76} />
+	{:else}
+		<Graphics draw={(g) => drawSymbolIcon(g, name, value)} tint={glow} alpha={0.55} scale={1.15} />
+		<Graphics draw={(g) => drawSymbolIcon(g, name, value)} />
+	{/if}
 	{#if name === 'O'}
 		<Text
 			text={`${value ?? ''}x`}

@@ -24,7 +24,8 @@
 			x={context.stateLayoutDerived.mainLayout().width * 0.5}
 			y={context.stateLayoutDerived.mainLayout().height * 0.5}
 		>
-			<SpineProvider key="loader" width={300}>
+			<Sprite key="vcLogo" anchor={0.5} y={-120} width={420} height={420} />
+			<SpineProvider key="loader" width={300} alpha={0}>
 				<SpineTrack trackIndex={0} animationName={'title_screen'} loop timeScale={3} />
 			</SpineProvider>
 			{#if !context.stateApp.loaded}

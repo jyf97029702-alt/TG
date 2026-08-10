@@ -91,15 +91,32 @@ their `apps/scatter` template) and wired up to VOID CHRONOS's own mechanics:
   `orbCollectorInfo` (Orb Collector pickup + global multiplier update). See
   `void_chronos/game_events.py`'s `send_portal_wild_event` /
   `send_orb_collector_event` for what emits them.
-- `src/components/SymbolGraphic.svelte` — all game symbols (S1-S8, Wild, Scatter,
-  Portal, Collector, Orb) are drawn **procedurally with PixiJS `Graphics`**, not
-  sprite/Spine art assets, since no real art has been commissioned yet. This is a
-  placeholder rendering layer, not final art — swapping it for real assets later
-  only touches this one file.
-- `src/components/BoardFrame.svelte` — fixed to size the decorative board frame off
-  the board's actual width **and** height independently (the stock template's
-  frame math assumed a wider-than-tall board; VOID CHRONOS's 5-reel x 6-row board is
-  taller than wide, which cropped the top/bottom rows until this fix).
+- `src/components/SymbolGraphic.svelte` — symbol rendering is a **hybrid**: `P`
+  (Portal) and `S4`-`S8` render real AI-generated art (`static/assets/generatedArt/`,
+  registered in `src/game/assets.ts` as `vcPortalCircle`/`vcRune`/`vcCrystal`/
+  `vcGemPurple`/`vcClock`/`vcSkull`) via `<Sprite>`; `S1`-`S3`, `W`, `SC`, `C`, `O`
+  still fall back to the original procedural `PIXI.Graphics` icons (`SYMBOL_ART_KEY`
+  at the top of the file controls which symbols use real art — extending it to the
+  rest just needs more generated images dropped into `generatedArt/` and registered
+  the same way).
+- `src/components/BoardFrame.svelte` — uses the real `frame.webp` art instead of the
+  template's placeholder frame sprite, and sizes it off the board's actual width
+  **and** height independently (the stock template's frame math assumed a
+  wider-than-tall board; VOID CHRONOS's 5-reel x 6-row board is taller than wide,
+  which cropped the top/bottom rows until this fix).
+- `src/components/Background.svelte` — replaced the template's spine cave/dust
+  background animation with the real `background.webp` tileable starfield art.
+- `src/components/LoadingScreen.svelte` — shows the real `logo.webp` in place of the
+  template's spine title animation.
+- `static/assets/generatedArt/` — the 10 AI-generated source images (logo, board
+  frame, background, and 6 symbol icons, plus `portal_big.webp` — a large winged
+  hourglass/portal feature-art piece not wired into any component yet, a good
+  candidate for the free-spin trigger celebration screen). The symbol/frame images
+  were run through a simple chroma-key cutout (sampling each image's own corner
+  pixels as the background color to key out, since the AI generator exports flat
+  RGB with no alpha channel) to get a usable transparent version — without this
+  they render as opaque squares that block the board/other art behind them.
+  `logo.webp` and `background.webp` are left as opaque full-bleed images on purpose.
 
 ### How to run it
 
@@ -114,9 +131,11 @@ cd web-sdk
 pnpm install
 cp -r /path/to/this/TG/stake_engine/web_frontend/void-chronos apps/void-chronos
 
-# copy static assets (fonts/sounds/shared UI chrome) from any existing app, since
-# this game reuses the template's placeholder assets pending real art:
-cp -r apps/scatter/static apps/void-chronos/static
+# apps/void-chronos/static/assets/generatedArt/ already ships the real symbol/frame/
+# background/logo art. Everything else (fonts, sounds, shared spine/UI chrome the
+# template's other components still use) needs to come from an existing app's
+# static folder -- copy it in WITHOUT clobbering generatedArt/:
+cp -rn apps/scatter/static/* apps/void-chronos/static/
 
 npx turbo run build --filter=void-chronos...   # builds workspace deps + the app
 npx turbo run dev --filter=void-chronos          # or: cd apps/void-chronos && vite dev --port 3011
@@ -134,7 +153,18 @@ book data.
 
 Builds and runs cleanly (`vite build`, `vite dev`, Storybook). Verified end-to-end
 against real book data via Storybook, including the game's custom mechanics.
-**Not done:** real art (everything is procedural placeholder graphics), sound design
-(reuses the template's placeholder SFX), and wiring to a live RGS backend (only
-tested against static book fixtures, which is the correct/expected way to develop
-a web-sdk frontend before an RGS integration exists).
+
+Real (AI-generated) art is wired in for the board frame, background, loading logo,
+and 6 of the 13 symbols (`P`, `S4`-`S8` — chosen because they're the highest-value/
+most-visible symbols). **Still procedural placeholder graphics:** `S1`-`S3`, `W`,
+`SC`, `C`, `O` — generate matching art for those (same style/prompt approach) and
+register them in `SymbolGraphic.svelte`'s `SYMBOL_ART_KEY` map + `assets.ts` to
+finish full coverage. `portal_big.webp` (the winged hourglass artifact) is generated
+but not placed yet — a natural fit for the free-spin trigger celebration screen
+(`FreeSpinIntro.svelte`).
+
+**Not done:** sound design (reuses the template's placeholder SFX), win/tumble/
+free-spin celebration screens still use the template's stock spine animations
+(not restyled to match the new art), and wiring to a live RGS backend (only tested
+against static book fixtures, which is the correct/expected way to develop a
+web-sdk frontend before an RGS integration exists).

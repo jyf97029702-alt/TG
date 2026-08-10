@@ -273,4 +273,54 @@ export default {
 		src: new URL('../../assets/audio/sounds.json', import.meta.url).href,
 		preload: true,
 	},
+	// AI-generated art (see stake_engine/README.md) replacing the procedural placeholder icons
+	vcLogo: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/logo.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcBackground: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/background.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcFrame: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/frame.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcPortalBig: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/portal_big.webp', import.meta.url).href,
+	},
+	vcSkull: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/skull.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcClock: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/clock.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcGemPurple: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/gem_purple.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcCrystal: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/crystal.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcPortalCircle: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/portal_circle.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcRune: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/rune.webp', import.meta.url).href,
+		preload: true,
+	},
 } as const;

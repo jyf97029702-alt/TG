@@ -11,7 +11,10 @@
 
 	const context = getContext();
 	const SPINE_SCALE = { width: 0.59, height: 0.62 };
-	const SPRITE_SCALE = { width: 1.15, height: 1.15 };
+	// vcFrame.webp's opening (the transparent inner window) is only ~58% of its width
+	// and ~54% of its height -- these scale the whole sprite up so that window fully
+	// contains the board, with a bit of margin. Re-measure if the frame art changes.
+	const SPRITE_SCALE = { width: 1.85, height: 2.0 };
 	const POSITION_ADJUSTMENT = 1.01;
 
 	type AnimationName = 'reelhouse_glow_start' | 'reelhouse_glow_idle' | 'reelhouse_glow_exit';
@@ -69,5 +72,5 @@
 	y={context.stateGameDerived.boardLayout().y * POSITION_ADJUSTMENT}
 	width={context.stateGameDerived.boardLayout().width * SPRITE_SCALE.width}
 	height={context.stateGameDerived.boardLayout().height * SPRITE_SCALE.height}
-	zIndex={2}
+	zIndex={-1}
 />

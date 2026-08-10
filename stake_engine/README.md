@@ -100,10 +100,15 @@ their `apps/scatter` template) and wired up to VOID CHRONOS's own mechanics:
   rest just needs more generated images dropped into `generatedArt/` and registered
   the same way).
 - `src/components/BoardFrame.svelte` — uses the real `frame.webp` art instead of the
-  template's placeholder frame sprite, and sizes it off the board's actual width
-  **and** height independently (the stock template's frame math assumed a
-  wider-than-tall board; VOID CHRONOS's 5-reel x 6-row board is taller than wide,
-  which cropped the top/bottom rows until this fix).
+  template's placeholder frame sprite. Sized off the board's actual width **and**
+  height independently (the stock template's frame math assumed a wider-than-tall
+  board; VOID CHRONOS's 5-reel x 6-row board is taller than wide, which cropped the
+  top/bottom rows until this fix), and further tuned because `frame.webp`'s
+  transparent inner window is only ~58%/~54% of the source image's width/height —
+  `SPRITE_SCALE` accounts for that so the board actually fits inside the opening
+  instead of being covered by the border art. Also drawn at `zIndex={-1}` (behind
+  the board) rather than in front of it, so symbols are always fully visible even if
+  that measurement is slightly off for a future frame image.
 - `src/components/Background.svelte` — replaced the template's spine cave/dust
   background animation with the real `background.webp` tileable starfield art.
 - `src/components/LoadingScreen.svelte` — shows the real `logo.webp` in place of the
@@ -112,11 +117,22 @@ their `apps/scatter` template) and wired up to VOID CHRONOS's own mechanics:
   frame, background, and 6 symbol icons, plus `portal_big.webp` — a large winged
   hourglass/portal feature-art piece not wired into any component yet, a good
   candidate for the free-spin trigger celebration screen). The symbol/frame images
-  were run through a simple chroma-key cutout (sampling each image's own corner
-  pixels as the background color to key out, since the AI generator exports flat
-  RGB with no alpha channel) to get a usable transparent version — without this
-  they render as opaque squares that block the board/other art behind them.
-  `logo.webp` and `background.webp` are left as opaque full-bleed images on purpose.
+  have no alpha channel out of the generator, so they're run through a cutout pass
+  that samples each image's own background color and flood-fills outward from the
+  image's corners and center to find the true background region (a plain per-pixel
+  luminance threshold left a semi-opaque haze near the border from the art's own
+  ambient-occlusion vignette, which visibly darkened the board through the frame
+  until this was tightened). `logo.webp` and `background.webp` are left as opaque
+  full-bleed images on purpose.
+- `vendor_overrides/components-ui-pixi/` — two files from web-sdk's **shared**
+  `packages/components-ui-pixi` (used by every game in the monorepo, not something
+  this app folder can override on its own): `ButtonBuyBonus.svelte` (bigger, gold/
+  amber styling so it actually stands out from the other gray HUD buttons — it
+  previously used the exact same neutral gray as Menu/Autospin/Turbo) and
+  `LayoutDesktop.svelte` (bumped the Balance/Win/Bet labels' scale and gave them a
+  bit more vertical clearance from the button row below). See "How to run it" for
+  where these go — they're not part of `apps/void-chronos` itself and won't do
+  anything sitting in this folder.
 
 ### How to run it
 
@@ -136,6 +152,12 @@ cp -r /path/to/this/TG/stake_engine/web_frontend/void-chronos apps/void-chronos
 # template's other components still use) needs to come from an existing app's
 # static folder -- copy it in WITHOUT clobbering generatedArt/:
 cp -rn apps/scatter/static/* apps/void-chronos/static/
+
+# overlay the two shared-package tweaks (bigger/gold Buy Bonus button, bigger
+# Balance/Win/Bet labels) -- these touch packages/components-ui-pixi, which every
+# game shares, so they can't live inside apps/void-chronos itself:
+cp apps/void-chronos/vendor_overrides/components-ui-pixi/src/components/*.svelte \
+   packages/components-ui-pixi/src/components/
 
 npx turbo run build --filter=void-chronos...   # builds workspace deps + the app
 npx turbo run dev --filter=void-chronos          # or: cd apps/void-chronos && vite dev --port 3011
@@ -162,6 +184,14 @@ register them in `SymbolGraphic.svelte`'s `SYMBOL_ART_KEY` map + `assets.ts` to
 finish full coverage. `portal_big.webp` (the winged hourglass artifact) is generated
 but not placed yet — a natural fit for the free-spin trigger celebration screen
 (`FreeSpinIntro.svelte`).
+
+The `ButtonBuyBonus`/`LayoutDesktop` HUD tweaks (see `vendor_overrides/` above) were
+verified against `LayoutDesktop` only, which is what a normal wide desktop browser
+window renders. `LayoutPortrait`/`LayoutLandscape`/`LayoutTablet` (mobile/narrow
+viewports) still use the stock template's sizing/spacing for the Balance/Win/Bet
+labels and Buy Bonus button — same idea (bump the label `scale`, give Buy Bonus its
+own color instead of matching Menu/Autospin/Turbo) needs repeating there, each file
+has its own hardcoded pixel positions so it isn't a shared fix.
 
 **Not done:** sound design (reuses the template's placeholder SFX), win/tumble/
 free-spin celebration screens still use the template's stock spine animations

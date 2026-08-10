@@ -44,8 +44,8 @@
 			{@render props.amountBet({ stacked: true })}
 		</Container>
 
-		<!-- bigger, centered, and raised above the balance/win/bet row -- see stake_engine/README.md -->
-		<Container y={DESKTOP_BASE_SIZE * 0.5 - 300} x={900} scale={0.75}>
+		<!-- bigger and off to the side of the board, not overlapping the reels -- see stake_engine/README.md -->
+		<Container y={DESKTOP_BASE_SIZE * 0.5 - 460} x={1620} scale={0.7}>
 			{@render props.buttonBuyBonus({ anchor: 0.5 })}
 		</Container>
 

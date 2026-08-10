@@ -128,9 +128,7 @@
 		return (name === 'O' ? orbPalette(value ?? 2) : (PALETTE[name] ?? PALETTE.S1)).glow;
 	}
 
-	// AI-generated art available for these symbols (see stake_engine/README.md) -- only O
-	// (Orb) still uses the procedural PIXI.Graphics icon above, since its art needs to
-	// support the multiplier value text overlay differently per tier.
+	// AI-generated art available for these symbols (see stake_engine/README.md)
 	export const SYMBOL_ART_KEY: Record<string, string> = {
 		S1: 'vcDiamond',
 		S2: 'vcHexagon',
@@ -145,6 +143,13 @@
 		P: 'vcPortalCircle',
 		C: 'vcUrn',
 	};
+
+	// O (Orb) picks its art by value tier, matching orbPalette()'s thresholds
+	function orbArtKey(value: number): string {
+		if (value >= 500) return 'vcOrbHigh';
+		if (value >= 50) return 'vcOrbMid';
+		return 'vcOrbLow';
+	}
 </script>
 
 <script lang="ts">
@@ -157,7 +162,7 @@
 	const name = $derived(props.rawSymbol.name as string);
 	const value = $derived(props.rawSymbol.multiplier);
 	const glow = $derived(symbolGlowColor(name, value));
-	const artKey = $derived(SYMBOL_ART_KEY[name]);
+	const artKey = $derived(name === 'O' ? orbArtKey(value ?? 2) : SYMBOL_ART_KEY[name]);
 	const label = $derived(
 		name === 'SC' ? 'SCATTER' : name === 'W' ? 'WILD' : name === 'P' ? 'PORTAL' : name === 'C' ? 'COLLECT' : '',
 	);

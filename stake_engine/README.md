@@ -91,13 +91,13 @@ their `apps/scatter` template) and wired up to VOID CHRONOS's own mechanics:
   `orbCollectorInfo` (Orb Collector pickup + global multiplier update). See
   `void_chronos/game_events.py`'s `send_portal_wild_event` /
   `send_orb_collector_event` for what emits them.
-- `src/components/SymbolGraphic.svelte` — all 12 symbols render real AI-generated art
-  (`static/assets/generatedArt/`, registered in `src/game/assets.ts`) via `<Sprite>`,
-  through the `SYMBOL_ART_KEY` map at the top of the file. Only `O` (Orb) still uses
-  the original procedural `PIXI.Graphics` icon, since its art needs to support a
-  multiplier value text overlay that differs per tier (2x/25x/100x/1000x) — dropping
-  in 4 more generated images (one per tier) and branching on `value` the way
-  `orbPalette()` already does would finish that one too.
+- `src/components/SymbolGraphic.svelte` — **all 13 symbols now render real
+  AI-generated art**, no procedural placeholders left. `S1`-`S8`, `W`, `SC`, `P`, `C`
+  go through the `SYMBOL_ART_KEY` map at the top of the file; `O` (Orb) picks its art
+  per-value via `orbArtKey()` (`vcOrbLow`/`vcOrbMid`/`vcOrbHigh`, matching
+  `orbPalette()`'s existing 50/500 thresholds) since it needs 3 different images for
+  its 3 color tiers, with the multiplier value still rendered as a `<Text>` overlay
+  on top the same as before.
 - `src/components/BoardFrame.svelte` — uses the real `frame.webp` art instead of the
   template's placeholder frame sprite. Sized off the board's actual width **and**
   height independently (the stock template's frame math assumed a wider-than-tall
@@ -112,17 +112,21 @@ their `apps/scatter` template) and wired up to VOID CHRONOS's own mechanics:
   background animation with the real `background.webp` tileable starfield art.
 - `src/components/LoadingScreen.svelte` — shows the real `logo.webp` in place of the
   template's spine title animation.
-- `static/assets/generatedArt/` — 17 AI-generated source images: logo, board frame,
-  background, all 12 non-Orb symbol icons, `buybonus_chest.webp` (the Buy Bonus
-  button art), and `portal_big.webp` — a large winged hourglass/portal feature-art
-  piece not wired into any component yet, a good candidate for the free-spin trigger
-  celebration screen. The symbol/frame/button images have no alpha channel out of
-  the generator, so they're run through a cutout pass that samples each image's own
-  background color and flood-fills outward from the image's corners and center to
-  find the true background region (a plain per-pixel luminance threshold left a
-  semi-opaque haze near the border from the art's own ambient-occlusion vignette,
-  which visibly darkened the board through the frame until this was tightened).
-  `logo.webp` and `background.webp` are left as opaque full-bleed images on purpose.
+- `static/assets/generatedArt/` — 20 AI-generated source images: logo, board frame,
+  background, all 13 symbol icons (3 of them for Orb's color tiers),
+  `buybonus_chest.webp` (the Buy Bonus button art), and `portal_big.webp` — a large
+  winged hourglass/portal feature-art piece not wired into any component yet, a good
+  candidate for the free-spin trigger celebration screen. The symbol/frame/button
+  images have no alpha channel out of the generator, so they're run through a cutout
+  pass that flood-fills outward from each image's corners/edges/center to find the
+  true background region and make it transparent. This needed two refinements beyond
+  a naive per-pixel luminance threshold: (1) a plain threshold left a semi-opaque
+  haze near the frame's border from the art's own ambient-occlusion vignette, which
+  visibly darkened the board through the frame; (2) one generated image
+  (`orb_low`) came back with a white pillarbox background instead of the usual dark
+  navy, which needed detecting and cropping out before the normal cutout would work
+  on it at all. `logo.webp` and `background.webp` are left as opaque full-bleed
+  images on purpose.
 - `vendor_overrides/components-ui-pixi/` — two files from web-sdk's **shared**
   `packages/components-ui-pixi` (used by every game in the monorepo, not something
   this app folder can override on its own):
@@ -186,13 +190,10 @@ Builds and runs cleanly (`vite build`, `vite dev`, Storybook). Verified end-to-e
 against real book data via Storybook, including the game's custom mechanics.
 
 Real (AI-generated) art is wired in for the board frame, background, loading logo,
-and 6 of the 13 symbols (`P`, `S4`-`S8` — chosen because they're the highest-value/
-most-visible symbols). **Still procedural placeholder graphics:** `S1`-`S3`, `W`,
-`SC`, `C`, `O` — generate matching art for those (same style/prompt approach) and
-register them in `SymbolGraphic.svelte`'s `SYMBOL_ART_KEY` map + `assets.ts` to
-finish full coverage. `portal_big.webp` (the winged hourglass artifact) is generated
-but not placed yet — a natural fit for the free-spin trigger celebration screen
-(`FreeSpinIntro.svelte`).
+the Buy Bonus button, and **all 13 symbols** — no procedural placeholder graphics
+left anywhere on the board. `portal_big.webp` (the winged hourglass artifact) is
+generated but not placed yet — a natural fit for the free-spin trigger celebration
+screen (`FreeSpinIntro.svelte`), left as a follow-up.
 
 **Not done:** sound design (reuses the template's placeholder SFX), win/tumble/
 free-spin celebration screens still use the template's stock spine animations

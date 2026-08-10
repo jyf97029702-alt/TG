@@ -358,4 +358,19 @@ export default {
 		src: new URL('../../assets/generatedArt/c_urn.webp', import.meta.url).href,
 		preload: true,
 	},
+	vcOrbLow: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/orb_low.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcOrbMid: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/orb_mid.webp', import.meta.url).href,
+		preload: true,
+	},
+	vcOrbHigh: {
+		type: 'sprite',
+		src: new URL('../../assets/generatedArt/orb_high.webp', import.meta.url).href,
+		preload: true,
+	},
 } as const;

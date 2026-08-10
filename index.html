@@ -1134,16 +1134,44 @@ void main(void)\r
   *{box-sizing:border-box;}
   html,body{
     margin:0; padding:0; width:100%; height:100%;
-    background:radial-gradient(ellipse at 50% -10%, #0c1830 0%, var(--bg-1) 45%, var(--bg-0) 100%);
+    background:
+      radial-gradient(ellipse at 20% -10%, #3a1a5c33 0%, transparent 55%),
+      radial-gradient(ellipse at 85% 10%, #0a2a4433 0%, transparent 50%),
+      radial-gradient(ellipse at 50% -10%, #0c1830 0%, var(--bg-1) 45%, var(--bg-0) 100%);
+    background-size: 200% 200%, 200% 200%, 100% 100%;
+    animation: nebulaDrift 22s ease-in-out infinite;
     color:var(--text);
     font-family:'Segoe UI', 'Trebuchet MS', Arial, sans-serif;
     overflow:hidden;
     -webkit-font-smoothing:antialiased;
   }
+  @keyframes nebulaDrift{
+    0%,100%{ background-position: 0% 0%, 100% 0%, 0 0; }
+    50%{ background-position: 30% 20%, 70% 30%, 0 0; }
+  }
   #app-root{
     position:relative;
     width:100%; height:100%;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  #app-root::before{
+    content:""; position:absolute; inset:0; pointer-events:none; z-index:0;
+    background-image:
+      radial-gradient(2px 2px at 10% 20%, #9fe9ffcc, transparent),
+      radial-gradient(1.5px 1.5px at 25% 65%, #ffe9a8bb, transparent),
+      radial-gradient(2px 2px at 40% 15%, #e347ffaa, transparent),
+      radial-gradient(1.5px 1.5px at 60% 80%, #9fe9ffaa, transparent),
+      radial-gradient(2px 2px at 75% 35%, #ffe9a8aa, transparent),
+      radial-gradient(1.5px 1.5px at 88% 60%, #e347ff99, transparent),
+      radial-gradient(2px 2px at 92% 12%, #9fe9ffbb, transparent),
+      radial-gradient(1.5px 1.5px at 15% 88%, #ffe9a899, transparent);
+    animation: driftParticles 14s linear infinite alternate;
+    opacity:0.8;
+  }
+  @keyframes driftParticles{
+    0%{ transform:translateY(0px); }
+    100%{ transform:translateY(-24px); }
   }
   #game-frame{
     position:relative;
@@ -1307,8 +1335,25 @@ void main(void)\r
   .readout-box{ flex:1; text-align:center; min-width:0; }
   .readout-box .lbl{ font-size:8px; letter-spacing:2px; color:var(--text-dim); text-transform:uppercase; }
   .readout-box .val{ font-size:14px; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #btn-spin-wrap{ position:relative; flex:0 0 auto; width:76px; height:76px; display:flex; align-items:center; justify-content:center; }
+  #btn-spin-wrap::before{
+    content:""; position:absolute; inset:0; border-radius:50%; pointer-events:none;
+    background:conic-gradient(from 0deg, var(--cyan), var(--magenta), var(--gold), var(--cyan));
+    filter:blur(3px); opacity:0.85;
+    animation: spinRing 3.2s linear infinite;
+  }
+  #btn-spin-wrap::after{
+    content:""; position:absolute; inset:-6px; border-radius:50%; pointer-events:none;
+    box-shadow:0 0 22px 4px rgba(34,229,255,0.55);
+    animation: spinRingPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes spinRing{ to{ transform:rotate(360deg); } }
+  @keyframes spinRingPulse{
+    0%,100%{ box-shadow:0 0 16px 2px rgba(34,229,255,0.45); }
+    50%{ box-shadow:0 0 30px 8px rgba(227,71,255,0.55); }
+  }
   #btn-spin{
-    flex:0 0 auto; width:66px; height:66px; border-radius:50%;
+    position:relative; flex:0 0 auto; width:66px; height:66px; border-radius:50%;
     background:radial-gradient(circle at 35% 30%, #2adfff, #0891b2 55%, #054554 100%);
     border:3px solid var(--gold); color:#02141a; font-weight:900;
     cursor:pointer; box-shadow:0 0 20px #22e5ff77, 0 4px 0 #045063;
@@ -1346,6 +1391,13 @@ void main(void)\r
     border:1px solid var(--panel-border); background:#0a101c; cursor:pointer;
   }
   .mode-card:hover{ border-color:var(--cyan); }
+  .mode-card:active{ transform:scale(0.97); }
+  .mode-card.selecting{ animation: modeCardSelect 0.5s ease; }
+  @keyframes modeCardSelect{
+    0%{ box-shadow:0 0 0px rgba(227,71,255,0); border-color:var(--gold); }
+    40%{ box-shadow:0 0 22px 6px rgba(227,71,255,0.8); border-color:var(--magenta); transform:scale(1.03); }
+    100%{ box-shadow:0 0 0px rgba(227,71,255,0); border-color:var(--gold); transform:scale(1); }
+  }
   .mode-card.active-mode{ border-color:var(--gold); background:#160f04; }
   .mode-card .mc-name{ font-weight:800; font-size:12px; letter-spacing:1px; }
   .mode-card .mc-desc{ font-size:10px; color:var(--text-dim); margin-top:2px; max-width:230px; }
@@ -1433,7 +1485,7 @@ void main(void)\r
         <div class="lbl">Win</div>
         <div class="val" id="val-win">0.00</div>
       </div>
-      <button id="btn-spin" title="Girar"><span class="play-tri"></span></button>
+      <div id="btn-spin-wrap"><button id="btn-spin" title="Girar"><span class="play-tri"></span></button></div>
       <div class="readout-box">
         <div class="lbl">Free Spins</div>
         <div class="val" id="val-freespins">0</div>
@@ -1893,7 +1945,7 @@ function buildModeList(){
         <div class="mc-desc">${cfg.desc}</div>
       </div>
       <div class="mc-cost">${costText}</div>`;
-    card.onclick = () => onModeCardClick(key);
+    card.onclick = () => onModeCardClick(key, card);
     modeList.appendChild(card);
   });
 }
@@ -1935,7 +1987,7 @@ modalPaytable.addEventListener("click", e => { if (e.target === modalPaytable) m
 const modalRules = $("#modal-rules");
 $("#rules-text").innerHTML = `
   <h3>Scatter Pays &amp; Cascada</h3>
-  8 o más símbolos iguales en cualquier parte de la grilla 6x5 pagan. Los símbolos ganadores explotan y los nuevos caen desde arriba (tumble), pudiendo encadenar varias cascadas en un mismo giro.
+  10 o más símbolos iguales en cualquier parte de la grilla 6x5 pagan. Los símbolos ganadores explotan y los nuevos caen desde arriba (tumble), pudiendo encadenar varias cascadas en un mismo giro.
   <h3>Portal Wild</h3>
   El símbolo Portal convierte 2-4 símbolos adyacentes en Wilds antes de evaluar los pagos.
   <h3>Orb Collector (Free Spins)</h3>
@@ -1951,7 +2003,7 @@ $("#btn-help").onclick = () => modalRules.classList.add("open");
 $("#rules-close").onclick = () => modalRules.classList.remove("open");
 modalRules.addEventListener("click", e => { if (e.target === modalRules) modalRules.classList.remove("open"); });
 
-function onModeCardClick(key){
+async function onModeCardClick(key, cardEl){
   if (state.spinning) return;
   const cfg = MODES[key];
   if (!cfg.forcesFreeSpins){
@@ -1965,6 +2017,12 @@ function onModeCardClick(key){
   if (cost > state.balance){
     flashInsufficientFunds();
     return;
+  }
+  if (cardEl){
+    cardEl.classList.add("selecting");
+    // pricier modes get a longer moment to savor the selection before the modal closes
+    const holdMs = 220 + Math.min(cfg.costMultiplier, 1000) * 0.35;
+    await wait(holdMs);
   }
   closeModal();
   runSpin(key);
@@ -2834,12 +2892,16 @@ async function playCascadeStep(entry){
 }
 
 async function playSpinSequence(seq, isFreeSpin){
-  if (!isFreeSpin) await spinReelIntro(seq.initialGrid);
-  else setGridInstant(seq.initialGrid);
+  // every spin gets the full reel-drop animation, win or not -- free spins used to
+  // hard-cut the grid with setGridInstant() when there was nothing to cascade,
+  // which made empty free spins fly by in a single frame with no visible feedback.
+  await spinReelIntro(seq.initialGrid);
 
   for (const entry of seq.cascades){
     await playCascadeStep(entry);
   }
+  // brief hold so a fast/empty spin's result is still readable before advancing
+  await wait(seq.cascades.length ? 250 : 500);
 }
 
 async function runSpin(forceMode){
@@ -2900,7 +2962,12 @@ async function runSpin(forceMode){
 
 async function playBonusBuyIntro(mode){
   const cfg = MODES[mode];
-  await showBanner(cfg.label.toUpperCase(), 0xe347ff, 900, cfg.desc);
+  const cx = CANVAS_W/2, cy = GRID_Y + GRID_H/2;
+  const tier = Math.min(cfg.costMultiplier / 1000, 1); // 0..1, richer for pricier modes
+  screenShake(6 + tier*16, 4 + Math.round(tier*8));
+  await screenFlash(0xe347ff, 0.4 + tier*0.5);
+  spawnBoardSparks(cx, cy, 20 + Math.round(tier*70));
+  await showBanner(cfg.label.toUpperCase(), 0xe347ff, 900 + tier*700, cfg.desc, tier >= 0.5 ? "PORTAL_BIG" : null);
 }
 
 async function runFreeSpinsSequence(fsData, bet){

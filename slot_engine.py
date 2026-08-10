@@ -76,7 +76,7 @@ SYMBOL_NAMES = {
 # With an 8-of-30 "anywhere on grid" trigger the low tier (8-11 symbols) lands very
 # often, so its payout must stay tiny; the payout only becomes serious from tier 15+,
 # where landing that many of one symbol is a genuine (and, for 25+, extremely rare) event.
-_TIER_CURVE: Dict[int, float] = {8: 0.00387, 10: 0.01161, 12: 0.03484, 15: 0.11613, 20: 0.58074, 25: 3.87}
+_TIER_CURVE: Dict[int, float] = {8: 0.00426, 10: 0.01277, 12: 0.03832, 15: 0.12774, 20: 0.63879, 25: 4.25681}
 _VALUE_FACTOR: Dict[str, float] = {
     "S1": 1.0, "S2": 1.4, "S3": 2.0, "S4": 2.8,
     "S5": 5.0, "S6": 8.0, "S7": 13.0, "S8": 20.0,

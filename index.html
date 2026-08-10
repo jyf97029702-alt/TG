@@ -1,0 +1,1420 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>VOID CHRONOS — Obsidian Play</title>
+<script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.2/dist/pixi.min.js"></script>
+<style>
+  :root{
+    --cyan:#22e5ff;
+    --teal:#14b8a6;
+    --blue:#3b82f6;
+    --gold:#f5c542;
+    --gold-dark:#c98a1c;
+    --magenta:#e347ff;
+    --bg-0:#020309;
+    --bg-1:#060a16;
+    --panel:#0b1220ee;
+    --panel-border:#1c2b45;
+    --text:#dcedff;
+    --text-dim:#7f93b8;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    background:radial-gradient(ellipse at 50% -10%, #0c1830 0%, var(--bg-1) 45%, var(--bg-0) 100%);
+    color:var(--text);
+    font-family:'Segoe UI', 'Trebuchet MS', Arial, sans-serif;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app-root{
+    position:relative;
+    width:100%; height:100%;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  #game-frame{
+    position:relative;
+    width:min(96vw, 560px);
+    height:min(96vh, 920px);
+    display:flex; flex-direction:column;
+    border:1px solid var(--panel-border);
+    border-radius:14px;
+    background:linear-gradient(180deg, #060c18 0%, #04070f 100%);
+    box-shadow:0 0 60px #00e5ff22, 0 0 120px #ffcc0011, inset 0 0 40px #00121f;
+    overflow:hidden;
+  }
+
+  /* ---------- top HUD ---------- */
+  #hud-top{
+    flex:0 0 auto;
+    display:flex; flex-direction:column; gap:4px;
+    padding:8px 10px 6px;
+    background:linear-gradient(180deg,#0a1120,#070c16);
+    border-bottom:1px solid var(--panel-border);
+    z-index:5;
+  }
+  .brand-row{ display:flex; align-items:center; justify-content:space-between; }
+  .brand-mark{ display:flex; align-items:center; gap:8px; }
+  .brand-mark .gem{
+    width:16px; height:22px;
+    background:linear-gradient(160deg,#141425,#000);
+    clip-path:polygon(50% 0%, 100% 30%, 78% 100%, 22% 100%, 0% 30%);
+    box-shadow:0 0 8px var(--cyan), 0 0 4px var(--gold) inset;
+  }
+  .brand-mark span{
+    font-weight:700; letter-spacing:3px; font-size:13px;
+    background:linear-gradient(90deg, var(--cyan), var(--gold));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .demo-badge{
+    font-size:9px; letter-spacing:1px; padding:3px 7px; border-radius:20px;
+    border:1px solid var(--gold-dark); color:var(--gold);
+    background:#1a1204a0;
+  }
+  .stats-row{ display:flex; gap:6px; }
+  .stat-box{
+    flex:1; background:#050a14; border:1px solid var(--panel-border); border-radius:8px;
+    padding:5px 8px; text-align:center;
+  }
+  .stat-box .lbl{ font-size:8px; letter-spacing:1.5px; color:var(--text-dim); text-transform:uppercase; }
+  .stat-box .val{ font-size:14px; font-weight:700; color:var(--text); }
+  .stat-bet .val{ display:flex; align-items:center; justify-content:center; gap:6px; }
+  .bet-btn{
+    width:16px; height:16px; border-radius:4px; border:1px solid var(--panel-border);
+    background:#0f1728; color:var(--cyan); font-size:11px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; user-select:none;
+  }
+  .bet-btn:active{ transform:scale(0.9); }
+  .stat-mult{
+    background:linear-gradient(180deg,#0e1a0c,#050a14);
+    border:1px solid var(--gold-dark);
+  }
+  .stat-mult .val{
+    font-size:20px;
+    background:linear-gradient(90deg, var(--gold), #fff6d8, var(--gold));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    text-shadow:0 0 12px #f5c54288;
+    transition:transform .15s ease;
+  }
+  .stat-mult.pulse .val{ transform:scale(1.35); }
+  .mode-badge{
+    font-size:9px; letter-spacing:1px; color:var(--magenta); text-align:center; margin-top:2px;
+    display:none;
+  }
+  .mode-badge.show{ display:block; }
+
+  /* ---------- canvas area ---------- */
+  #pixi-wrap{ position:relative; flex:1 1 auto; min-height:0; aspect-ratio:640/900; max-width:100%; max-height:100%; margin:0 auto; }
+  #pixi-container{ position:absolute; inset:0; }
+  #pixi-container canvas{ width:100% !important; height:100% !important; display:block; }
+
+  /* ---------- bottom HUD ---------- */
+  #hud-bottom{
+    flex:0 0 auto; display:flex; align-items:center; gap:10px;
+    padding:10px 12px 14px; background:linear-gradient(0deg,#070c16,#0a1120);
+    border-top:1px solid var(--panel-border);
+  }
+  .side-btn{
+    flex:1; padding:10px 4px; border-radius:10px; border:1px solid var(--panel-border);
+    background:#0e1626; color:var(--text); font-size:10px; letter-spacing:1px; font-weight:700;
+    cursor:pointer; text-transform:uppercase;
+  }
+  .side-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  #btn-spin{
+    flex:0 0 auto; width:74px; height:74px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #2adfff, #0891b2 55%, #054554 100%);
+    border:3px solid #7de8ff; color:#02141a; font-weight:900; font-size:12px; letter-spacing:1px;
+    cursor:pointer; box-shadow:0 0 22px #22e5ff77, 0 4px 0 #045063;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+  }
+  #btn-spin:active{ transform:translateY(2px); box-shadow:0 0 16px #22e5ff55, 0 2px 0 #045063; }
+  #btn-spin:disabled{ filter:grayscale(0.7) brightness(0.6); cursor:not-allowed; }
+  .side-btn:disabled{ opacity:0.4; cursor:not-allowed; }
+
+  /* ---------- modal ---------- */
+  .modal-overlay{
+    position:absolute; inset:0; background:#000000c8; backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center; z-index:50;
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .modal-box{
+    width:92%; max-height:86%; overflow-y:auto;
+    background:linear-gradient(180deg,#0c1526,#070b14);
+    border:1px solid var(--panel-border); border-radius:14px; padding:16px;
+    box-shadow:0 0 60px #00000090;
+  }
+  .modal-box h2{
+    margin:0 0 4px; font-size:16px; letter-spacing:2px; text-align:center;
+    background:linear-gradient(90deg,var(--cyan),var(--gold)); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .modal-box .sub{ text-align:center; font-size:10px; color:var(--text-dim); margin-bottom:12px; }
+  .mode-card{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:10px 12px; margin-bottom:8px; border-radius:10px;
+    border:1px solid var(--panel-border); background:#0a101c; cursor:pointer;
+  }
+  .mode-card:hover{ border-color:var(--cyan); }
+  .mode-card.active-mode{ border-color:var(--gold); background:#160f04; }
+  .mode-card .mc-name{ font-weight:800; font-size:12px; letter-spacing:1px; }
+  .mode-card .mc-desc{ font-size:10px; color:var(--text-dim); margin-top:2px; max-width:230px; }
+  .mode-card .mc-cost{
+    font-size:13px; font-weight:800; color:var(--gold); white-space:nowrap;
+  }
+  .modal-close{
+    display:block; margin:10px auto 0; padding:8px 22px; border-radius:20px;
+    background:#111a2b; border:1px solid var(--panel-border); color:var(--text-dim); cursor:pointer;
+    font-size:11px; letter-spacing:1px;
+  }
+
+  /* ---------- intro ---------- */
+  #intro-screen{
+    position:absolute; inset:0; background:#000; z-index:100;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #intro-screen canvas{ width:100% !important; height:100% !important; display:block; }
+
+  @media (max-height: 720px){
+    #btn-spin{ width:60px; height:60px; }
+  }
+</style>
+</head>
+<body>
+<div id="app-root">
+  <div id="game-frame">
+
+    <!-- ===== TOP HUD ===== -->
+    <div id="hud-top">
+      <div class="brand-row">
+        <div class="brand-mark"><div class="gem"></div><span>VOID CHRONOS</span></div>
+        <div class="demo-badge" id="demo-badge">PLAY FOR FUN</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-box stat-balance">
+          <div class="lbl">Saldo</div>
+          <div class="val" id="val-balance">10,000.00</div>
+        </div>
+        <div class="stat-box stat-bet">
+          <div class="lbl">Apuesta</div>
+          <div class="val">
+            <span class="bet-btn" id="bet-dec">−</span>
+            <span id="val-bet">1.00</span>
+            <span class="bet-btn" id="bet-inc">+</span>
+          </div>
+        </div>
+        <div class="stat-box stat-mult" id="mult-box">
+          <div class="lbl">Multiplicador Global</div>
+          <div class="val" id="val-mult">1x</div>
+        </div>
+      </div>
+      <div class="mode-badge" id="mode-badge">MODO ANTE BET · x3 · SCATTER TRIPLICADO</div>
+    </div>
+
+    <!-- ===== CANVAS ===== -->
+    <div id="pixi-wrap">
+      <div id="pixi-container"></div>
+    </div>
+
+    <!-- ===== BOTTOM HUD ===== -->
+    <div id="hud-bottom">
+      <button class="side-btn" id="btn-menu">Menú</button>
+      <button id="btn-spin">GIRAR</button>
+      <button class="side-btn" id="btn-buy">Bonus Buy</button>
+    </div>
+
+    <!-- ===== BONUS BUY / MODE MODAL ===== -->
+    <div class="modal-overlay" id="modal-overlay">
+      <div class="modal-box">
+        <h2>VOID CHRONOS · MODOS</h2>
+        <div class="sub">Selecciona un modo de apuesta o compra una función directamente. Saldo ficticio — Play for Fun.</div>
+        <div id="mode-list"></div>
+        <button class="modal-close" id="modal-close">Cerrar</button>
+      </div>
+    </div>
+
+    <!-- ===== INTRO ===== -->
+    <div id="intro-screen"><div id="intro-container"></div></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================================================
+   VOID CHRONOS — Frontend prototype (Obsidian Play)
+   Single-file Pixi.js v7 demo. The math below mirrors slot_engine.py (VoidChronosEngine) so
+   the playable demo matches the reference Python RGS engine's mechanics and pay curve.
+   ========================================================================================= */
+
+/* ---------------------------------------------------------------------------------------
+   1) CONFIG / GAME DATA  (mirrors slot_engine.py)
+   --------------------------------------------------------------------------------------- */
+const ROWS = 6, COLS = 5, GRID_CELLS = ROWS * COLS;
+
+const LOW_SYMBOLS = ["S1","S2","S3","S4"];
+const HIGH_SYMBOLS = ["S5","S6","S7","S8"];
+const PAYING_SYMBOLS = LOW_SYMBOLS.concat(HIGH_SYMBOLS);
+const WILD = "WILD", SCATTER = "SCAT", PORTAL = "PORTAL", COLLECTOR = "COLLECT", ORB = "ORB";
+
+const SYMBOL_NAMES = {
+  S1:"Cyan Shard", S2:"Teal Rune", S3:"Azure Gem", S4:"Gold Coin",
+  S5:"Void Eye", S6:"Portal Core", S7:"Chronos Gear", S8:"Obsidian Skull",
+  WILD:"Void Wild", SCAT:"Chronos Scatter", PORTAL:"Portal Rift", COLLECT:"Void Collector", ORB:"Multiplier Orb"
+};
+
+const TIER_CURVE = {8:0.00387, 10:0.01161, 12:0.03484, 15:0.11613, 20:0.58074, 25:3.87};
+const VALUE_FACTOR = { S1:1.0, S2:1.4, S3:2.0, S4:2.8, S5:5.0, S6:8.0, S7:13.0, S8:20.0, WILD:28.0, SCAT:25.0 };
+const PAYTABLE = {};
+for (const sym in VALUE_FACTOR){
+  const f = VALUE_FACTOR[sym];
+  PAYTABLE[sym] = Object.keys(TIER_CURVE).map(Number).sort((a,b)=>b-a).map(t=>[t, TIER_CURVE[t]*f]);
+}
+
+const ORB_VALUES  = [2,5,10,25,50,100,500,1000];
+const ORB_WEIGHTS = [300,240,170,110,65,30,8,2];
+
+const BASE_WEIGHTS = { S1:170,S2:155,S3:139,S4:124, S5:109,S6:93,S7:78,S8:62, WILD:35, SCAT:15, PORTAL:20 };
+const FREE_SPIN_WEIGHTS = { S1:172,S2:155,S3:139,S4:123, S5:108,S6:92,S7:76,S8:59, WILD:40, SCAT:5, PORTAL:25, ORB:12, COLLECT:3 };
+
+const NATURAL_FS_TABLE = {4:10, 5:12};
+const RETRIGGER_SCATTER_THRESHOLD = 3;
+const RETRIGGER_SPINS = 5;
+const MAX_WIN_MULT = 20000;
+const MAX_CASCADE_STEPS = 40;
+
+const MODES = {
+  NORMAL:         { costMultiplier:1,    scatterWeightMult:1, forcesFreeSpins:false,
+                     label:"Normal", desc:"Juego base estándar." },
+  ANTE_BET:       { costMultiplier:3,    scatterWeightMult:3, forcesFreeSpins:false,
+                     label:"Ante Bet", desc:"Triplica la probabilidad de 4+ scatters." },
+  SURGE:          { costMultiplier:50,   forcesFreeSpins:true, fsCount:8,  minOrb:5,   startGlobalMult:1,
+                     label:"Surge", desc:"8 Free Spins. Orbes mínimos 5x." },
+  STANDARD_BONUS: { costMultiplier:100,  forcesFreeSpins:true, fsCount:10, minOrb:null, startGlobalMult:1,
+                     label:"Standard Bonus", desc:"10 Free Spins garantizados." },
+  VOID_GATES:     { costMultiplier:500,  forcesFreeSpins:true, fsCount:10, minOrb:10,  startGlobalMult:1,
+                     guaranteedOrbs:{countRange:[1,2], forcedValues:[], poolMin:10},
+                     label:"Void Gates", desc:"10 Free Spins. Orbes mínimos 10x, con orbe garantizado." },
+  CHRONOS_STORM:  { costMultiplier:1000, forcesFreeSpins:true, fsCount:12, minOrb:null, startGlobalMult:50,
+                     guaranteedOrbs:{countRange:[3,5], forcedValues:[500,1000], poolMin:50},
+                     label:"Chronos Storm", desc:"12 Free Spins. Multiplicador Global inicia en 50x. 3-5 orbes de alto valor garantizados cada spin (incluye 500x y 1000x)." },
+};
+
+/* ---------------------------------------------------------------------------------------
+   2) RNG / MATH ENGINE  (mirrors VoidChronosEngine.spin in slot_engine.py)
+   --------------------------------------------------------------------------------------- */
+function idx(r,c){ return r*COLS+c; }
+function rcOf(i){ return [Math.floor(i/COLS), i%COLS]; }
+function neighborsOf(i){
+  const [r,c] = rcOf(i); const out=[];
+  [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dr,dc])=>{
+    const rr=r+dr, cc=c+dc;
+    if (rr>=0 && rr<ROWS && cc>=0 && cc<COLS) out.push(idx(rr,cc));
+  });
+  return out;
+}
+function weightedPick(weights){
+  const keys = Object.keys(weights);
+  let total = 0; for (const k of keys) total += weights[k];
+  let r = Math.random()*total;
+  for (const k of keys){ if (r < weights[k]) return k; r -= weights[k]; }
+  return keys[keys.length-1];
+}
+function rollOrbValue(minOrb){
+  let vals = ORB_VALUES, wts = ORB_WEIGHTS;
+  if (minOrb != null){
+    const pairs = vals.map((v,i)=>[v,wts[i]]).filter(p=>p[0]>=minOrb);
+    if (pairs.length){ vals = pairs.map(p=>p[0]); wts = pairs.map(p=>p[1]); }
+  }
+  let total = 0; for (const w of wts) total += w;
+  let r = Math.random()*total;
+  for (let i=0;i<vals.length;i++){ if (r < wts[i]) return vals[i]; r -= wts[i]; }
+  return vals[vals.length-1];
+}
+function payMultiplier(sym, count){
+  const tiers = PAYTABLE[sym]; if (!tiers) return 0;
+  for (const [c,m] of tiers){ if (count >= c) return m; }
+  return 0;
+}
+function shuffleArr(a){ for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function sampleIndices(n, count){ const pool=[...Array(n).keys()]; shuffleArr(pool); return pool.slice(0,count); }
+
+function newCell(symbol){ return symbol===ORB ? {symbol:ORB, value:null} : {symbol, value:null}; }
+
+function generateGrid(weights, minOrb, guaranteedOrbs){
+  const grid = [];
+  for (let i=0;i<GRID_CELLS;i++){
+    const sym = weightedPick(weights);
+    if (sym === ORB) grid.push({symbol:ORB, value: rollOrbValue(minOrb)});
+    else grid.push({symbol:sym, value:null});
+  }
+  if (guaranteedOrbs){
+    const [lo,hi] = guaranteedOrbs.countRange;
+    const count = lo + Math.floor(Math.random()*(hi-lo+1));
+    const positions = sampleIndices(GRID_CELLS, count);
+    const forced = guaranteedOrbs.forcedValues || [];
+    const values = [];
+    for (let i=0;i<count;i++){
+      if (i < forced.length) values.push(forced[i]);
+      else values.push(rollOrbValue(guaranteedOrbs.poolMin));
+    }
+    shuffleArr(values);
+    positions.forEach((pos,i)=>{ grid[pos] = {symbol:ORB, value:values[i]}; });
+  }
+  return grid;
+}
+
+function applyPortalWilds(grid){
+  const events = [];
+  const portalPositions = [];
+  grid.forEach((c,i)=>{ if (c && c.symbol===PORTAL) portalPositions.push(i); });
+  for (const p of portalPositions){
+    const candidates = neighborsOf(p).filter(n => grid[n] && ![SCATTER,PORTAL,COLLECTOR,ORB,WILD].includes(grid[n].symbol));
+    shuffleArr(candidates);
+    const extra = 1 + Math.floor(Math.random()*Math.min(3, Math.max(1, candidates.length)));
+    const chosen = candidates.slice(0, extra);
+    const converted = [p, ...chosen];
+    converted.forEach(pos => { grid[pos] = {symbol:WILD, value:null}; });
+    events.push({portalPosition:p, convertedPositions:converted});
+  }
+  return events;
+}
+
+function evaluateWins(grid){
+  const wildPositions = [];
+  grid.forEach((c,i)=>{ if (c && c.symbol===WILD) wildPositions.push(i); });
+  const wins = []; const allPositions = new Set();
+
+  for (const sym of PAYING_SYMBOLS){
+    const positions = [];
+    grid.forEach((c,i)=>{ if (c && c.symbol===sym) positions.push(i); });
+    const total = positions.length + wildPositions.length;
+    if (total < 8) continue;
+    const mult = payMultiplier(sym, total);
+    if (mult <= 0) continue;
+    const posSet = Array.from(new Set(positions.concat(wildPositions))).sort((a,b)=>a-b);
+    wins.push({symbol:sym, count:total, positions:posSet, payBase:mult});
+    posSet.forEach(p=>allPositions.add(p));
+  }
+  if (wildPositions.length >= 8){
+    const mult = payMultiplier(WILD, wildPositions.length);
+    if (mult > 0){
+      const posSet = [...wildPositions].sort((a,b)=>a-b);
+      wins.push({symbol:WILD, count:wildPositions.length, positions:posSet, payBase:mult});
+      posSet.forEach(p=>allPositions.add(p));
+    }
+  }
+  const scatPositions = [];
+  grid.forEach((c,i)=>{ if (c && c.symbol===SCATTER) scatPositions.push(i); });
+  if (scatPositions.length >= 8){
+    const mult = payMultiplier(SCATTER, scatPositions.length);
+    if (mult > 0){
+      wins.push({symbol:SCATTER, count:scatPositions.length, positions:scatPositions, payBase:mult});
+      scatPositions.forEach(p=>allPositions.add(p));
+    }
+  }
+  return { wins, positions: Array.from(allPositions).sort((a,b)=>a-b) };
+}
+
+function applyOrbCollector(grid){
+  const collectorPositions = [];
+  grid.forEach((c,i)=>{ if (c && c.symbol===COLLECTOR) collectorPositions.push(i); });
+  if (!collectorPositions.length) return null;
+  const orbPositions = [];
+  grid.forEach((c,i)=>{ if (c && c.symbol===ORB) orbPositions.push(i); });
+  const orbValues = orbPositions.map(i=>grid[i].value || 0);
+  const collectedTotal = orbValues.reduce((a,b)=>a+b, 0);
+  return { collectorPositions, orbPositions, orbValues, collectedTotal, positions: collectorPositions.concat(orbPositions) };
+}
+
+function tumble(grid, removePositions, weights, minOrb){
+  const removeSet = new Set(removePositions);
+  removePositions.forEach(p => { grid[p] = null; });
+  const newPositions = [];
+  for (let col=0; col<COLS; col++){
+    const colCells = []; for (let r=0;r<ROWS;r++) colCells.push(grid[idx(r,col)]);
+    const surviving = colCells.filter(c => c !== null);
+    const missing = ROWS - surviving.length;
+    const fresh = [];
+    for (let i=0;i<missing;i++){
+      const sym = weightedPick(weights);
+      if (sym === ORB) fresh.push({symbol:ORB, value: rollOrbValue(minOrb)});
+      else fresh.push({symbol:sym, value:null});
+    }
+    const newCol = fresh.concat(surviving);
+    for (let r=0;r<ROWS;r++){
+      const cellIdx = idx(r,col);
+      grid[cellIdx] = newCol[r];
+      if (r < missing) newPositions.push(cellIdx);
+    }
+  }
+  return newPositions;
+}
+
+function cloneGrid(grid){ return grid.map(c => c ? {symbol:c.symbol, value:c.value} : null); }
+
+function resolveSpinSequence(opts){
+  const { weights, initialWeights, globalMultiplier, minOrb, guaranteedOrbs, inFreeSpins } = opts;
+  const grid = generateGrid(initialWeights || weights, minOrb, inFreeSpins ? guaranteedOrbs : null);
+  let scatterCount = grid.filter(c => c.symbol === SCATTER).length;
+  let gm = globalMultiplier;
+  const cascades = []; let spinWin = 0; let step = 0;
+
+  while (true){
+    step++;
+    if (step > MAX_CASCADE_STEPS) break;
+    const gridBefore = cloneGrid(grid);
+    const portalEvents = applyPortalWilds(grid);
+    const { wins, positions: winPositions } = evaluateWins(grid);
+    const winPayRaw = wins.reduce((s,w)=>s+w.payBase, 0);
+    const orbEvent = applyOrbCollector(grid);
+    if (orbEvent) gm += orbEvent.collectedTotal;
+    const winPay = winPayRaw * gm;
+    spinWin += winPay;
+    wins.forEach(w => { w.pay = w.payBase * gm; });
+
+    const removePositions = Array.from(new Set(winPositions.concat(orbEvent ? orbEvent.positions : []))).sort((a,b)=>a-b);
+    const cascadeEntry = {
+      step, gridBefore, portalEvents, wins, orbEvent,
+      globalMultiplierAfter: gm, removePositions, stepWin: winPay
+    };
+
+    if (!removePositions.length){
+      cascadeEntry.gridAfter = cloneGrid(grid);
+      cascadeEntry.newSymbols = [];
+      cascades.push(cascadeEntry);
+      break;
+    }
+
+    const newSymbols = tumble(grid, removePositions, weights, minOrb);
+    newSymbols.forEach(p => { if (grid[p].symbol === SCATTER) scatterCount++; });
+    cascadeEntry.gridAfter = cloneGrid(grid);
+    cascadeEntry.newSymbols = newSymbols;
+    cascades.push(cascadeEntry);
+  }
+
+  return { initialGrid: cascades[0].gridBefore, cascades, scatterCount, spinWin, globalMultiplierEnd: gm };
+}
+
+function playFreeSpins(opts){
+  let { betAmount, fsCount, startGlobalMult, minOrb, guaranteedOrbs, runningTotal, capAmount } = opts;
+  let gm = startGlobalMult, spinsRemaining = fsCount, spinsPlayed = 0, totalRetriggers = 0, totalFsWin = 0;
+  const spinLog = [];
+  while (spinsRemaining > 0){
+    if (runningTotal >= capAmount) break;
+    spinsRemaining--; spinsPlayed++;
+    const seq = resolveSpinSequence({ weights:FREE_SPIN_WEIGHTS, globalMultiplier:gm, minOrb, guaranteedOrbs, inFreeSpins:true });
+    gm = seq.globalMultiplierEnd;
+    const retrigger = seq.scatterCount >= RETRIGGER_SCATTER_THRESHOLD;
+    if (retrigger){ spinsRemaining += RETRIGGER_SPINS; totalRetriggers++; }
+    seq.spinIndex = spinsPlayed; seq.retrigger = retrigger; seq.spinsRemainingAfter = spinsRemaining;
+    totalFsWin += seq.spinWin; runningTotal += seq.spinWin;
+    spinLog.push(seq);
+    if (runningTotal >= capAmount) break;
+  }
+  return {
+    result: {
+      initialSpinsAwarded: fsCount, spinsPlayed, retriggers: totalRetriggers,
+      globalMultiplierStart: startGlobalMult, globalMultiplierFinal: gm,
+      totalFreeSpinsWin: totalFsWin, spins: spinLog
+    },
+    runningTotal
+  };
+}
+
+function engineSpin(betAmount, mode){
+  const cfg = MODES[mode];
+  const result = {
+    game:"VOID CHRONOS", studio:"Obsidian Play", betAmount, mode,
+    buyCost: betAmount * cfg.costMultiplier,
+    baseGame:null, freeSpinsTriggered:false, freeSpins:null,
+    totalWin:0, totalWinMultiplier:0, maxWinCapped:false
+  };
+  let runningTotal = 0;
+  const capAmount = betAmount * MAX_WIN_MULT;
+
+  if (cfg.forcesFreeSpins){
+    const { result: fsResult, runningTotal: rt } = playFreeSpins({
+      betAmount, fsCount:cfg.fsCount, startGlobalMult:cfg.startGlobalMult || 1,
+      minOrb:cfg.minOrb, guaranteedOrbs:cfg.guaranteedOrbs, runningTotal, capAmount
+    });
+    result.freeSpinsTriggered = true; result.freeSpins = fsResult; runningTotal = rt;
+  } else {
+    const initialWeights = Object.assign({}, BASE_WEIGHTS);
+    const scatMult = cfg.scatterWeightMult || 1;
+    if (scatMult !== 1) initialWeights.SCAT = initialWeights.SCAT * scatMult;
+
+    const baseSeq = resolveSpinSequence({ weights:BASE_WEIGHTS, initialWeights, globalMultiplier:1, minOrb:null, guaranteedOrbs:null, inFreeSpins:false });
+    result.baseGame = baseSeq;
+    runningTotal += baseSeq.spinWin;
+
+    let fsAward = 0;
+    if (baseSeq.scatterCount >= 5) fsAward = NATURAL_FS_TABLE[5];
+    else if (baseSeq.scatterCount === 4) fsAward = NATURAL_FS_TABLE[4];
+
+    if (fsAward > 0 && runningTotal < capAmount){
+      const { result: fsResult, runningTotal: rt } = playFreeSpins({
+        betAmount, fsCount:fsAward, startGlobalMult:1, minOrb:null, guaranteedOrbs:null, runningTotal, capAmount
+      });
+      result.freeSpinsTriggered = true; result.freeSpins = fsResult; runningTotal = rt;
+    }
+  }
+
+  const capped = runningTotal >= capAmount;
+  const finalTotal = Math.min(runningTotal, capAmount);
+  result.totalWin = finalTotal;
+  result.totalWinMultiplier = betAmount ? finalTotal / betAmount : 0;
+  result.maxWinCapped = capped;
+  return result;
+}
+
+/* ---------------------------------------------------------------------------------------
+   3) APP STATE
+   --------------------------------------------------------------------------------------- */
+const BET_STEPS = [0.20,0.40,0.60,1.00,2.00,3.00,5.00,10,20,50,100,250];
+const state = {
+  balance: 10000,
+  betIndex: 3,
+  mode: "NORMAL",
+  spinning: false,
+  globalMultiplier: 1,
+  inFreeSpins: false,
+  fsRemaining: 0,
+  fsTotal: 0,
+};
+function currentBet(){ return BET_STEPS[state.betIndex]; }
+
+/* ---------------------------------------------------------------------------------------
+   4) DOM HELPERS / HUD
+   --------------------------------------------------------------------------------------- */
+const $ = sel => document.querySelector(sel);
+const elBalance = $("#val-balance");
+const elBet = $("#val-bet");
+const elMult = $("#val-mult");
+const elMultBox = $("#mult-box");
+const elModeBadge = $("#mode-badge");
+const btnSpin = $("#btn-spin");
+const btnBuy = $("#btn-buy");
+const btnMenu = $("#btn-menu");
+
+function fmt(n){
+  return n.toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function refreshHud(){
+  elBalance.textContent = fmt(state.balance);
+  elBet.textContent = fmt(currentBet());
+  elMult.textContent = state.globalMultiplier + "x";
+  if (state.mode === "ANTE_BET"){
+    elModeBadge.textContent = "MODO ANTE BET · x3 COSTO · SCATTER TRIPLICADO";
+    elModeBadge.classList.add("show");
+  } else {
+    elModeBadge.classList.remove("show");
+  }
+}
+function pulseMultBox(){
+  elMultBox.classList.add("pulse");
+  setTimeout(()=>elMultBox.classList.remove("pulse"), 220);
+}
+function setSpinning(v){
+  state.spinning = v;
+  btnSpin.disabled = v;
+  btnBuy.disabled = v;
+  document.getElementById("bet-inc").style.pointerEvents = v ? "none" : "auto";
+  document.getElementById("bet-dec").style.pointerEvents = v ? "none" : "auto";
+}
+
+document.getElementById("bet-inc").onclick = () => {
+  if (state.spinning) return;
+  state.betIndex = Math.min(BET_STEPS.length-1, state.betIndex+1);
+  refreshHud();
+};
+document.getElementById("bet-dec").onclick = () => {
+  if (state.spinning) return;
+  state.betIndex = Math.max(0, state.betIndex-1);
+  refreshHud();
+};
+
+/* ---------------------------------------------------------------------------------------
+   5) BONUS BUY / MODE MODAL
+   --------------------------------------------------------------------------------------- */
+const modalOverlay = $("#modal-overlay");
+const modeList = $("#mode-list");
+
+function buildModeList(){
+  modeList.innerHTML = "";
+  Object.keys(MODES).forEach(key => {
+    const cfg = MODES[key];
+    const card = document.createElement("div");
+    card.className = "mode-card" + (state.mode === key ? " active-mode" : "");
+    const costText = cfg.forcesFreeSpins ? ("x" + cfg.costMultiplier) : (cfg.costMultiplier===1 ? "Base" : "x" + cfg.costMultiplier);
+    card.innerHTML = `
+      <div>
+        <div class="mc-name">${cfg.label.toUpperCase()}</div>
+        <div class="mc-desc">${cfg.desc}</div>
+      </div>
+      <div class="mc-cost">${costText}</div>`;
+    card.onclick = () => onModeCardClick(key);
+    modeList.appendChild(card);
+  });
+}
+function openModal(){ buildModeList(); modalOverlay.classList.add("open"); }
+function closeModal(){ modalOverlay.classList.remove("open"); }
+btnBuy.onclick = openModal;
+btnMenu.onclick = openModal;
+$("#modal-close").onclick = closeModal;
+modalOverlay.addEventListener("click", e => { if (e.target === modalOverlay) closeModal(); });
+
+function onModeCardClick(key){
+  if (state.spinning) return;
+  const cfg = MODES[key];
+  if (!cfg.forcesFreeSpins){
+    state.mode = key;
+    refreshHud();
+    closeModal();
+    return;
+  }
+  // bonus buy: immediate cost + forced free-spins spin
+  const cost = currentBet() * cfg.costMultiplier;
+  if (cost > state.balance){
+    flashInsufficientFunds();
+    return;
+  }
+  closeModal();
+  runSpin(key);
+}
+function flashInsufficientFunds(){
+  showBanner("SALDO INSUFICIENTE", 0xff5566, 1000);
+}
+
+/* ---------------------------------------------------------------------------------------
+   6) PIXI APP + VISUAL FACTORY
+   --------------------------------------------------------------------------------------- */
+const CANVAS_W = 640, CANVAS_H = 900;
+const CELL_W = 108, CELL_H = 100, GAP = 6;
+const GRID_W = COLS*CELL_W + (COLS-1)*GAP;
+const GRID_H = ROWS*CELL_H + (ROWS-1)*GAP;
+const GRID_X = (CANVAS_W - GRID_W) / 2;
+const GRID_Y = 96;
+
+const app = new PIXI.Application({
+  width: CANVAS_W, height: CANVAS_H, backgroundAlpha: 0,
+  antialias: true, resolution: Math.min(window.devicePixelRatio||1, 2), autoDensity: true,
+});
+document.getElementById("pixi-container").appendChild(app.view);
+
+const layerBg = new PIXI.Container();
+const layerGrid = new PIXI.Container();
+const layerFx = new PIXI.Container();
+const layerBanner = new PIXI.Container();
+app.stage.addChild(layerBg, layerGrid, layerFx, layerBanner);
+
+function cellCenter(i){
+  const [r,c] = rcOf(i);
+  return { x: GRID_X + c*(CELL_W+GAP) + CELL_W/2, y: GRID_Y + r*(CELL_H+GAP) + CELL_H/2 };
+}
+
+/* --- background: deep space / void energy --- */
+function buildBackground(){
+  const g = new PIXI.Graphics();
+  g.beginFill(0x030510).drawRect(0,0,CANVAS_W,CANVAS_H).endFill();
+  // radial glow bands
+  for (let i=6;i>=1;i--){
+    g.beginFill(0x081b33, 0.05).drawCircle(CANVAS_W/2, GRID_Y+GRID_H/2, 60*i).endFill();
+  }
+  layerBg.addChild(g);
+  // frame around grid
+  const frame = new PIXI.Graphics();
+  frame.lineStyle(2, 0x18324a, 1);
+  frame.drawRoundedRect(GRID_X-10, GRID_Y-10, GRID_W+20, GRID_H+20, 16);
+  frame.lineStyle(1, 0x22e5ff, 0.35);
+  frame.drawRoundedRect(GRID_X-14, GRID_Y-14, GRID_W+28, GRID_H+28, 18);
+  layerBg.addChild(frame);
+
+  // slot backdrop cells (empty sockets) for premium feel
+  for (let i=0;i<GRID_CELLS;i++){
+    const {x,y} = cellCenter(i);
+    const socket = new PIXI.Graphics();
+    socket.beginFill(0x040910, 0.9).lineStyle(1, 0x14283e, 1)
+      .drawRoundedRect(x-CELL_W/2, y-CELL_H/2, CELL_W, CELL_H, 10).endFill();
+    layerBg.addChild(socket);
+  }
+}
+
+/* --- color palette per symbol --- */
+const PALETTE = {
+  S1:{top:0x1fd9ff, bot:0x0b6b82, icon:0xeafeff, glow:0x22e5ff},
+  S2:{top:0x2be6b0, bot:0x0a6b58, icon:0xe9fff8, glow:0x14b8a6},
+  S3:{top:0x4d8dff, bot:0x1c3f8c, icon:0xeaf1ff, glow:0x3b82f6},
+  S4:{top:0xffd76b, bot:0x9c6a10, icon:0xfff6dd, glow:0xf5c542},
+  S5:{top:0x9b6bff, bot:0x2e1064, icon:0xd8c2ff, glow:0x8b5cf6},
+  S6:{top:0x39c7ff, bot:0x8a5a12, icon:0xfff0c9, glow:0xf5c542},
+  S7:{top:0xd4941e, bot:0x3a2408, icon:0xffe9b8, glow:0xd4941e},
+  S8:{top:0x2a2a3f, bot:0x05050c, icon:0x9fe9ff, glow:0x22e5ff},
+  WILD:{top:0xfff6d0, bot:0xd6a417, icon:0x3a2b00, glow:0xffe27a},
+  SCAT:{top:0xf27bff, bot:0x7a0d97, icon:0xfff0ff, glow:0xe347ff},
+  PORTAL:{top:0x22e5ff, bot:0x7a3fd1, icon:0xfff9e0, glow:0xb26bff},
+  COLLECT:{top:0x27314c, bot:0x05070d, icon:0x8fe8ff, glow:0x22e5ff},
+};
+function orbPalette(v){
+  if (v >= 500) return {top:0xff5fae, bot:0x780d3d, icon:0xfff0f7, glow:0xff2f8f};
+  if (v >= 50)  return {top:0xffcf5a, bot:0x9c5c0a, icon:0xfff6dd, glow:0xf5c542};
+  return {top:0x22e5ff, bot:0x0a5a75, icon:0xeafeff, glow:0x22e5ff};
+}
+
+function gradientRoundRect(g, w, h, colTop, colBot, radius){
+  const bands = 14;
+  for (let i=0;i<bands;i++){
+    const t = i/(bands-1);
+    const col = lerpColor(colTop, colBot, t);
+    const yTop = -h/2 + (h/bands)*i;
+    g.beginFill(col, 1).drawRect(-w/2, yTop, w, h/bands+1).endFill();
+  }
+  const mask = new PIXI.Graphics();
+  mask.beginFill(0xffffff).drawRoundedRect(-w/2,-h/2,w,h,radius).endFill();
+  return mask;
+}
+function lerpColor(a,b,t){
+  const ar=(a>>16)&255, ag=(a>>8)&255, ab=a&255;
+  const br=(b>>16)&255, bg=(b>>8)&255, bb=b&255;
+  const r=Math.round(ar+(br-ar)*t), gg=Math.round(ag+(bg-ag)*t), bl=Math.round(ab+(bb-ab)*t);
+  return (r<<16)+(gg<<8)+bl;
+}
+
+function regularPolygonPoints(cx,cy,radius,sides,rotation=0){
+  const pts=[];
+  for (let i=0;i<sides;i++){
+    const a = rotation + i*(Math.PI*2/sides);
+    pts.push(cx+Math.cos(a)*radius, cy+Math.sin(a)*radius);
+  }
+  return pts;
+}
+function starPoints(cx,cy,rOuter,rInner,spikes,rotation=-Math.PI/2){
+  const pts=[];
+  for (let i=0;i<spikes*2;i++){
+    const r = i%2===0 ? rOuter : rInner;
+    const a = rotation + i*(Math.PI/spikes);
+    pts.push(cx+Math.cos(a)*r, cy+Math.sin(a)*r);
+  }
+  return pts;
+}
+
+function drawIcon(symbol, value){
+  const g = new PIXI.Graphics();
+  const pal = symbol===ORB ? orbPalette(value) : PALETTE[symbol];
+  switch(symbol){
+    case "S1": // cyan shard - diamond
+      g.beginFill(pal.icon).drawPolygon(regularPolygonPoints(0,0,26,4,-Math.PI/2)).endFill();
+      g.lineStyle(2, pal.glow, 0.9).drawPolygon(regularPolygonPoints(0,0,26,4,-Math.PI/2));
+      break;
+    case "S2": // teal rune - hexagon + cross
+      g.beginFill(pal.icon).drawPolygon(regularPolygonPoints(0,0,25,6)).endFill();
+      g.lineStyle(2.5, pal.glow, 0.95).moveTo(-10,0).lineTo(10,0).moveTo(0,-10).lineTo(0,10);
+      break;
+    case "S3": // azure gem - pentagon
+      g.beginFill(pal.icon).drawPolygon(regularPolygonPoints(0,0,26,5,-Math.PI/2)).endFill();
+      g.lineStyle(2, pal.glow, 0.9).drawPolygon(regularPolygonPoints(0,-4,14,5,-Math.PI/2));
+      break;
+    case "S4": // gold coin
+      g.beginFill(pal.icon).drawCircle(0,0,25).endFill();
+      g.lineStyle(2.5, pal.glow, 1).drawCircle(0,0,18);
+      g.beginFill(pal.glow,0.9).drawPolygon(starPoints(0,0,8,3.5,5)).endFill();
+      break;
+    case "S5": // void eye
+      g.beginFill(pal.icon).drawEllipse(0,0,27,17).endFill();
+      g.beginFill(0x0b0018).drawCircle(0,0,10).endFill();
+      g.beginFill(pal.glow).drawCircle(0,0,5).endFill();
+      break;
+    case "S6": // portal core
+      g.lineStyle(4, pal.icon, 1).drawCircle(0,0,22);
+      g.lineStyle(3, pal.glow, 1).drawCircle(0,0,13);
+      g.beginFill(pal.icon,0.9).drawCircle(0,0,5).endFill();
+      break;
+    case "S7": { // chronos gear
+      const teeth = 8;
+      g.beginFill(pal.icon);
+      for (let i=0;i<teeth;i++){
+        const a = i*(Math.PI*2/teeth);
+        const cx=Math.cos(a)*22, cy=Math.sin(a)*22;
+        g.drawRect(cx-4,cy-4,8,8);
+      }
+      g.endFill();
+      g.beginFill(pal.icon).drawCircle(0,0,17).endFill();
+      g.beginFill(0x1a1000).drawCircle(0,0,7).endFill();
+      break;
+    }
+    case "S8": // obsidian skull
+      g.beginFill(pal.icon).drawRoundedRect(-18,-20,36,30,14).endFill();
+      g.beginFill(pal.icon).drawPolygon([-14,8, -4,8, -9,22]).endFill();
+      g.beginFill(pal.icon).drawPolygon([4,8, 14,8, 9,22]).endFill();
+      g.beginFill(pal.glow).drawCircle(-8,-6,5).endFill();
+      g.beginFill(pal.glow).drawCircle(8,-6,5).endFill();
+      break;
+    case "WILD": {
+      g.beginFill(pal.icon).drawPolygon(starPoints(0,0,28,12,8)).endFill();
+      g.lineStyle(2, pal.bot, 0.8).drawPolygon(starPoints(0,0,28,12,8));
+      break;
+    }
+    case "SCAT": { // hourglass void portal
+      g.lineStyle(3, pal.glow, 1).drawCircle(0,0,27);
+      g.beginFill(pal.icon)
+        .drawPolygon([-16,-20, 16,-20, 3,0, 16,20, -16,20, -3,0])
+        .endFill();
+      g.lineStyle(2, pal.bot, 1).moveTo(-3,0).lineTo(3,0);
+      break;
+    }
+    case "PORTAL": {
+      g.lineStyle(4, pal.top, 1).drawCircle(0,0,24);
+      g.lineStyle(3, pal.bot, 0.9).drawCircle(0,0,15);
+      g.lineStyle(2, pal.icon, 0.8).drawCircle(0,0,7);
+      break;
+    }
+    case "COLLECT": {
+      g.beginFill(pal.icon).drawCircle(0,0,14).endFill();
+      for (let i=0;i<8;i++){
+        const a = i*(Math.PI*2/8);
+        g.lineStyle(2.5, pal.glow, 0.9)
+          .moveTo(Math.cos(a)*26, Math.sin(a)*26)
+          .lineTo(Math.cos(a)*16, Math.sin(a)*16);
+      }
+      break;
+    }
+    case "ORB": {
+      g.beginFill(pal.icon).drawCircle(0,0,24).endFill();
+      g.beginFill(0xffffff, 0.35).drawEllipse(-7,-9,9,6).endFill();
+      g.lineStyle(2, pal.glow, 1).drawCircle(0,0,24);
+      break;
+    }
+  }
+  return g;
+}
+
+/* --- one grid tile: background gem + icon + glow + label --- */
+function buildTile(symbol, value){
+  const c = new PIXI.Container();
+  const pal = symbol===ORB ? orbPalette(value) : PALETTE[symbol];
+
+  const bgHolder = new PIXI.Graphics();
+  const mask = gradientRoundRect(bgHolder, CELL_W-6, CELL_H-6, pal.top, pal.bot, 12);
+  bgHolder.mask = mask;
+  c.addChild(bgHolder, mask);
+
+  const border = new PIXI.Graphics();
+  border.lineStyle(1.4, pal.glow, 0.85).drawRoundedRect(-(CELL_W-6)/2,-(CELL_H-6)/2,CELL_W-6,CELL_H-6,12);
+  c.addChild(border);
+
+  // glow (blurred duplicate icon behind)
+  const glow = drawIcon(symbol, value);
+  glow.filters = [new PIXI.BlurFilter(6)];
+  glow.tint = pal.glow; glow.alpha = 0.7; glow.scale.set(1.15);
+  c.addChild(glow);
+
+  const icon = drawIcon(symbol, value);
+  c.addChild(icon);
+
+  if (symbol === ORB){
+    const t = new PIXI.Text((value||0)+"x", { fontFamily:"Segoe UI", fontWeight:"800", fontSize:15, fill: value>=500?0xffe4f2:(value>=50?0x3a2400:0x00323c), stroke:0xffffff, strokeThickness:0 });
+    t.anchor.set(0.5); t.y = 26;
+    c.addChild(t);
+  }
+  if (symbol === SCATTER || symbol === WILD || symbol === PORTAL || symbol === COLLECTOR){
+    const label = symbol===SCATTER?"SCATTER":symbol===WILD?"WILD":symbol===PORTAL?"PORTAL":"COLLECT";
+    const t = new PIXI.Text(label, { fontFamily:"Segoe UI", fontWeight:"800", fontSize:8, letterSpacing:1, fill:0xffffff });
+    t.anchor.set(0.5); t.y = CELL_H/2 - 12;
+    c.addChild(t);
+  }
+
+  c.pivot.set(0,0);
+  return c;
+}
+
+/* ---------------------------------------------------------------------------------------
+   7) GRID RENDERER + ANIMATION HELPERS
+   --------------------------------------------------------------------------------------- */
+function wait(ms){ return new Promise(res => setTimeout(res, ms)); }
+function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
+function easeOutBack(t){ const c1=1.70158, c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); }
+function tween(obj, props, duration, easing=easeOutCubic){
+  return new Promise(resolve => {
+    const start = {}; for (const k in props) start[k]=obj[k];
+    const t0 = performance.now();
+    function step(now){
+      const t = Math.min(1, (now-t0)/duration);
+      const e = easing(t);
+      for (const k in props) obj[k] = start[k] + (props[k]-start[k])*e;
+      if (t < 1) requestAnimationFrame(step); else resolve();
+    }
+    requestAnimationFrame(step);
+  });
+}
+
+let tileSlots = new Array(GRID_CELLS).fill(null); // PIXI.Container per grid position
+
+function placeTileAt(container, i){
+  const {x,y} = cellCenter(i);
+  container.x = x; container.y = y;
+}
+
+function setGridInstant(grid){
+  layerGrid.removeChildren();
+  tileSlots = new Array(GRID_CELLS).fill(null);
+  grid.forEach((cell,i) => {
+    if (!cell) return;
+    const t = buildTile(cell.symbol, cell.value);
+    placeTileAt(t, i);
+    layerGrid.addChild(t);
+    tileSlots[i] = t;
+  });
+}
+
+async function spinReelIntro(finalGrid){
+  // quick flicker per column then settle, to sell a "reel spin" feel
+  layerGrid.removeChildren();
+  tileSlots = new Array(GRID_CELLS).fill(null);
+  const flickerSyms = PAYING_SYMBOLS.concat([WILD]);
+  const colTiles = Array.from({length:COLS}, ()=>[]);
+  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++){
+    const i = idx(r,c);
+    const t = buildTile(flickerSyms[Math.floor(Math.random()*flickerSyms.length)], null);
+    placeTileAt(t, i); t.y -= 260; t.alpha = 0.85;
+    layerGrid.addChild(t); colTiles[c].push({tile:t, i});
+  }
+  const flickerHandles = colTiles.map((col, c) => {
+    return setInterval(() => {
+      col.forEach(({tile}) => {
+        layerGrid.removeChild(tile);
+      });
+    }, 60);
+  });
+  const proms = [];
+  for (let c=0;c<COLS;c++){
+    proms.push((async ()=>{
+      await wait(140*c);
+      for (let r=0;r<ROWS;r++){
+        const i = idx(r,c);
+        const cell = finalGrid[i];
+        const t = buildTile(cell.symbol, cell.value);
+        placeTileAt(t, i);
+        const target = cellCenter(i);
+        t.y = target.y - 420 - r*30;
+        layerGrid.addChild(t);
+        tileSlots[i] = t;
+        tween(t, {y: target.y}, 420 + r*35, easeOutBack);
+      }
+    })());
+  }
+  await Promise.all(proms);
+  flickerHandles.forEach(h => clearInterval(h));
+  await wait(120);
+}
+
+function computeColumnTumbleMap(removePositions){
+  const removeSet = new Set(removePositions);
+  const map = {};
+  for (let col=0; col<COLS; col++){
+    let missing = 0;
+    for (let r=0;r<ROWS;r++) if (removeSet.has(idx(r,col))) missing++;
+    let rank = 0;
+    for (let r=0;r<ROWS;r++){
+      const i = idx(r,col);
+      if (!removeSet.has(i)){
+        map[i] = idx(missing+rank, col);
+        rank++;
+      }
+    }
+  }
+  return map;
+}
+
+async function playTumble(removePositions, newSymbolPositions, gridAfter){
+  const survivorMap = computeColumnTumbleMap(removePositions);
+  const proms = [];
+
+  // explode removed tiles
+  removePositions.forEach(i => {
+    const t = tileSlots[i];
+    if (!t) return;
+    spawnBurst(t.x, t.y, PALETTE[t.__symbol]?.glow || 0x22e5ff);
+    proms.push(tween(t, {alpha:0}, 220).then(()=>{
+      t.scale.set(1);
+    }));
+    proms.push(tween(t.scale, {x:1.4,y:1.4}, 220));
+    layerGrid.removeChild
+  });
+  await Promise.all(proms);
+  removePositions.forEach(i => { const t = tileSlots[i]; if (t){ layerGrid.removeChild(t); tileSlots[i]=null; } });
+
+  // move survivors down
+  const moveProms = [];
+  Object.keys(survivorMap).forEach(oldIStr => {
+    const oldI = Number(oldIStr); const newI = survivorMap[oldI];
+    const t = tileSlots[oldI];
+    if (!t) return;
+    tileSlots[oldI] = null;
+    tileSlots[newI] = t;
+    const target = cellCenter(newI);
+    moveProms.push(tween(t, {y: target.y}, 320, easeOutCubic));
+  });
+
+  // drop new symbols from above
+  newSymbolPositions.forEach(i => {
+    const cell = gridAfter[i];
+    const t = buildTile(cell.symbol, cell.value);
+    const target = cellCenter(i);
+    t.x = target.x; t.y = target.y - 480 - Math.random()*80;
+    layerGrid.addChild(t);
+    tileSlots[i] = t;
+    moveProms.push(tween(t, {y: target.y}, 420, easeOutBack));
+  });
+
+  await Promise.all(moveProms);
+}
+
+function spawnBurst(x,y,color,count=14){
+  for (let i=0;i<count;i++){
+    const p = new PIXI.Graphics();
+    p.beginFill(color, 1).drawCircle(0,0,2+Math.random()*3).endFill();
+    p.x = x; p.y = y;
+    layerFx.addChild(p);
+    const angle = Math.random()*Math.PI*2;
+    const dist = 30+Math.random()*60;
+    const dur = 380+Math.random()*220;
+    tween(p, {x:x+Math.cos(angle)*dist, y:y+Math.sin(angle)*dist, alpha:0}, dur).then(()=>layerFx.removeChild(p));
+  }
+}
+
+function highlightWin(positions, color=0xffe27a){
+  positions.forEach(i => {
+    const t = tileSlots[i];
+    if (!t) return;
+    tween(t.scale, {x:1.18,y:1.18}, 180, easeOutBack).then(()=>tween(t.scale,{x:1,y:1},180));
+    spawnBurst(t.x, t.y, color, 6);
+  });
+}
+
+/* --- floating banners / text popups --- */
+function showBanner(text, color=0x22e5ff, holdMs=900, sub=""){
+  return new Promise(async resolve => {
+    const c = new PIXI.Container();
+    const t = new PIXI.Text(text, {
+      fontFamily:"Segoe UI", fontWeight:"900", fontSize:30, letterSpacing:2,
+      fill:[0xffffff,color], stroke:0x00040a, strokeThickness:6,
+      dropShadow:true, dropShadowColor:color, dropShadowBlur:14, dropShadowDistance:0
+    });
+    t.anchor.set(0.5);
+    c.addChild(t);
+    if (sub){
+      const s = new PIXI.Text(sub, {fontFamily:"Segoe UI", fontWeight:"700", fontSize:13, fill:0xffffff, letterSpacing:1});
+      s.anchor.set(0.5); s.y = 26;
+      c.addChild(s);
+    }
+    c.x = CANVAS_W/2; c.y = CANVAS_H*0.38; c.alpha = 0; c.scale.set(0.6);
+    layerBanner.addChild(c);
+    await Promise.all([tween(c,{alpha:1},220), tween(c.scale,{x:1,y:1},260, easeOutBack)]);
+    await wait(holdMs);
+    await Promise.all([tween(c,{alpha:0},260), tween(c.scale,{x:1.15,y:1.15},260)]);
+    layerBanner.removeChild(c);
+    resolve();
+  });
+}
+
+function floatingWinText(amountMult){
+  const t = new PIXI.Text("+" + amountMult.toFixed(2) + "x", {
+    fontFamily:"Segoe UI", fontWeight:"900", fontSize:22, fill:0xfff2b8,
+    stroke:0x1a0f00, strokeThickness:4
+  });
+  t.anchor.set(0.5); t.x = CANVAS_W/2; t.y = GRID_Y + GRID_H/2; t.alpha=0;
+  layerBanner.addChild(t);
+  tween(t, {y:t.y-50, alpha:1}, 260).then(async ()=>{
+    await wait(360);
+    await tween(t, {alpha:0, y:t.y-90}, 300);
+    layerBanner.removeChild(t);
+  });
+}
+
+/* ---------------------------------------------------------------------------------------
+   8) INTRO ANIMATION — Obsidian Play
+   --------------------------------------------------------------------------------------- */
+async function playIntro(){
+  const introApp = new PIXI.Application({ resizeTo: document.getElementById("intro-screen"), backgroundAlpha:0, antialias:true, resolution: Math.min(window.devicePixelRatio||1,2), autoDensity:true });
+  document.getElementById("intro-container").appendChild(introApp.view);
+  const W = introApp.renderer.width / introApp.renderer.resolution;
+  const H = introApp.renderer.height / introApp.renderer.resolution;
+
+  const bg = new PIXI.Graphics();
+  bg.beginFill(0x000000).drawRect(0,0,W,H).endFill();
+  introApp.stage.addChild(bg);
+
+  const cx = W/2, cy = H/2 - 40;
+
+  // crystal shard (obsidian) — vertical, jagged
+  const crystal = new PIXI.Graphics();
+  const shardPts = [0,-90, 26,-40, 18,40, 0,95, -18,40, -26,-40];
+  crystal.beginFill(0x0a0a14).lineStyle(2, 0x1c2b45).drawPolygon(shardPts).endFill();
+  crystal.x = cx; crystal.y = cy; crystal.alpha = 0; crystal.scale.set(0.6);
+  introApp.stage.addChild(crystal);
+
+  // inner sheen
+  const sheen = new PIXI.Graphics();
+  sheen.beginFill(0x2a2a44, 0.5).drawPolygon([0,-80, 10,-30, 6,60, 0,85, -4,20]).endFill();
+  crystal.addChild(sheen);
+
+  // glow behind
+  const glow = new PIXI.Graphics();
+  glow.beginFill(0x22e5ff, 0.35).drawCircle(0,0,110).endFill();
+  glow.filters = [new PIXI.BlurFilter(40)];
+  glow.x = cx; glow.y = cy; glow.alpha = 0;
+  introApp.stage.addChildAt(glow, 1);
+
+  // crack lines (cyan + gold)
+  const cracks = new PIXI.Graphics();
+  cracks.x = cx; cracks.y = cy; cracks.alpha = 0;
+  introApp.stage.addChild(cracks);
+  function drawCracks(progress){
+    cracks.clear();
+    const paths = [
+      [[0,-70],[8,-30],[-6,0],[10,40],[2,80]],
+      [[-4,-50],[-16,-10],[-4,20],[-14,55]],
+      [[6,-60],[18,-20],[10,10],[20,50]],
+    ];
+    const colors = [0x22e5ff, 0xf5c542, 0x22e5ff];
+    paths.forEach((pts, pi) => {
+      const n = Math.max(2, Math.floor(pts.length*progress));
+      cracks.lineStyle(1.6, colors[pi%colors.length], 0.95);
+      cracks.moveTo(pts[0][0], pts[0][1]);
+      for (let i=1;i<n;i++) cracks.lineTo(pts[i][0], pts[i][1]);
+    });
+  }
+
+  const title = new PIXI.Text("OBSIDIAN PLAY", {
+    fontFamily:"Georgia, 'Times New Roman', serif", fontSize:30, fontWeight:"700",
+    fill:[0xffffff,0xcfe9ff], letterSpacing:8,
+    dropShadow:true, dropShadowColor:0x22e5ff, dropShadowBlur:12, dropShadowDistance:0
+  });
+  title.anchor.set(0.5);
+  title.x = cx; title.y = cy + 150; title.alpha = 0;
+  introApp.stage.addChild(title);
+
+  const subtitle = new PIXI.Text("V O I D   C H R O N O S", {
+    fontFamily:"Segoe UI", fontSize:12, letterSpacing:6, fill:0x8fb4d9
+  });
+  subtitle.anchor.set(0.5); subtitle.x = cx; subtitle.y = cy + 182; subtitle.alpha = 0;
+  introApp.stage.addChild(subtitle);
+
+  await Promise.all([
+    tween(crystal, {alpha:1}, 500),
+    tween(crystal.scale, {x:1,y:1}, 700, easeOutBack),
+    tween(glow, {alpha:1}, 700),
+  ]);
+
+  cracks.alpha = 1;
+  for (let p=0;p<=1;p+=0.08){ drawCracks(p); await wait(28); }
+  spawnIntroSparks(introApp, cx, cy);
+
+  await Promise.all([tween(title,{alpha:1}, 500), tween(subtitle,{alpha:1}, 500)]);
+  // subtle pulse loop
+  let pulses = 0;
+  const pulseTimer = setInterval(()=>{
+    pulses++;
+    tween(glow.scale, {x:1.12,y:1.12}, 500).then(()=>tween(glow.scale,{x:1,y:1},500));
+  }, 1000);
+
+  await wait(1300);
+  clearInterval(pulseTimer);
+
+  await Promise.all([
+    tween(introApp.stage, {alpha:0}, 500)
+  ]);
+  document.getElementById("intro-screen").style.opacity = "0";
+  document.getElementById("intro-screen").style.transition = "opacity .5s ease";
+  await wait(520);
+  document.getElementById("intro-screen").style.display = "none";
+  introApp.destroy(true, {children:true});
+}
+function spawnIntroSparks(introApp, cx, cy){
+  for (let i=0;i<26;i++){
+    const s = new PIXI.Graphics();
+    const col = Math.random()>0.5 ? 0x22e5ff : 0xf5c542;
+    s.beginFill(col).drawCircle(0,0,1.5+Math.random()*2).endFill();
+    s.x = cx; s.y = cy;
+    introApp.stage.addChild(s);
+    const a = Math.random()*Math.PI*2, d = 60+Math.random()*140;
+    tween(s, {x:cx+Math.cos(a)*d, y:cy+Math.sin(a)*d, alpha:0}, 700+Math.random()*400)
+      .then(()=>introApp.stage.removeChild(s));
+  }
+}
+
+/* ---------------------------------------------------------------------------------------
+   9) TOP-BANNER GLOBAL MULTIPLIER (in-canvas, shown during Free Spins)
+   --------------------------------------------------------------------------------------- */
+const fsInfoText = new PIXI.Text("", {
+  fontFamily:"Segoe UI", fontWeight:"800", fontSize:14, letterSpacing:1, fill:0xffe27a,
+});
+fsInfoText.anchor.set(0.5,0);
+fsInfoText.x = CANVAS_W/2; fsInfoText.y = 8;
+layerBanner.addChild(fsInfoText);
+function updateFsInfo(){
+  fsInfoText.text = state.inFreeSpins ? `FREE SPINS  ${state.fsTotal-state.fsRemaining+1} / ${state.fsTotal}` : "";
+}
+
+/* ---------------------------------------------------------------------------------------
+   10) MAIN SPIN FLOW
+   --------------------------------------------------------------------------------------- */
+function winTierBanner(mult){
+  if (mult >= MAX_WIN_MULT) return {text:"MAX WIN!", color:0xff2f8f, sub:"20,000x — LÍMITE MÁXIMO ALCANZADO"};
+  if (mult >= 500) return {text:"VOID WIN", color:0xe347ff, sub:mult.toFixed(2)+"x"};
+  if (mult >= 150) return {text:"EPIC WIN", color:0xff8a3d, sub:mult.toFixed(2)+"x"};
+  if (mult >= 50)  return {text:"MEGA WIN", color:0xf5c542, sub:mult.toFixed(2)+"x"};
+  if (mult >= 10)  return {text:"BIG WIN", color:0x22e5ff, sub:mult.toFixed(2)+"x"};
+  return null;
+}
+
+async function playCascadeStep(entry){
+  if (entry.portalEvents && entry.portalEvents.length){
+    for (const ev of entry.portalEvents){
+      const src = tileSlots[ev.portalPosition];
+      if (src) spawnBurst(src.x, src.y, 0xb26bff, 20);
+      await wait(120);
+      ev.convertedPositions.forEach(pos => {
+        const old = tileSlots[pos];
+        if (old){ layerGrid.removeChild(old); }
+        const nt = buildTile(WILD, null);
+        placeTileAt(nt, pos);
+        nt.scale.set(0.2);
+        layerGrid.addChild(nt);
+        tileSlots[pos] = nt;
+        spawnBurst(nt.x, nt.y, 0xffe27a, 10);
+        tween(nt.scale, {x:1,y:1}, 260, easeOutBack);
+      });
+      await wait(260);
+    }
+  }
+
+  if (entry.wins && entry.wins.length){
+    const totalStepPay = entry.wins.reduce((s,w)=>s+w.pay, 0);
+    entry.wins.forEach(w => highlightWin(w.positions));
+    if (totalStepPay > 0) floatingWinText(totalStepPay / state.currentBetRef);
+    await wait(520);
+  }
+
+  if (entry.orbEvent){
+    const oe = entry.orbEvent;
+    const collectorTile = tileSlots[oe.collectorPositions[0]];
+    const proms = [];
+    oe.orbPositions.forEach(pos => {
+      const t = tileSlots[pos];
+      if (!t || !collectorTile) return;
+      proms.push(tween(t, {x:collectorTile.x, y:collectorTile.y}, 380, easeOutCubic));
+      proms.push(tween(t.scale, {x:0.2,y:0.2}, 380));
+    });
+    await Promise.all(proms);
+    if (collectorTile) spawnBurst(collectorTile.x, collectorTile.y, 0x22e5ff, 26);
+    state.globalMultiplier += oe.collectedTotal;
+    elMult.textContent = state.globalMultiplier + "x";
+    pulseMultBox();
+    await showBanner("ORBE ABSORBIDO", 0x22e5ff, 500, "+" + oe.collectedTotal + "x GLOBAL");
+  }
+
+  if (entry.removePositions && entry.removePositions.length){
+    await playTumble(entry.removePositions, entry.newSymbols, entry.gridAfter);
+  }
+}
+
+async function playSpinSequence(seq, isFreeSpin){
+  if (!isFreeSpin) await spinReelIntro(seq.initialGrid);
+  else setGridInstant(seq.initialGrid);
+
+  for (const entry of seq.cascades){
+    await playCascadeStep(entry);
+  }
+}
+
+async function runSpin(forceMode){
+  if (state.spinning) return;
+  const mode = forceMode || state.mode;
+  const cfg = MODES[mode];
+  const bet = currentBet();
+  const cost = bet * cfg.costMultiplier;
+
+  if (cost > state.balance){ flashInsufficientFunds(); return; }
+
+  setSpinning(true);
+  state.balance -= cost;
+  state.currentBetRef = bet;
+  refreshHud();
+
+  const result = engineSpin(bet, mode);
+
+  try{
+    if (cfg.forcesFreeSpins){
+      await playBonusBuyIntro(mode);
+      await runFreeSpinsSequence(result.freeSpins, bet);
+    } else {
+      await playSpinSequence(result.baseGame, false);
+      if (result.freeSpinsTriggered){
+        await showBanner("FREE SPINS!", 0xffe27a, 700, (result.baseGame.scatterCount)+" SCATTERS");
+        await runFreeSpinsSequence(result.freeSpins, bet);
+      }
+    }
+  } catch(e){
+    console.error("Spin animation error:", e);
+  }
+
+  state.balance += result.totalWin;
+  state.globalMultiplier = 1;
+  state.inFreeSpins = false;
+  updateFsInfo();
+  refreshHud();
+
+  const tier = winTierBanner(result.totalWinMultiplier);
+  if (tier){
+    await showBanner(tier.text, tier.color, 1400, tier.sub);
+  }
+
+  setSpinning(false);
+}
+
+async function playBonusBuyIntro(mode){
+  const cfg = MODES[mode];
+  await showBanner(cfg.label.toUpperCase(), 0xe347ff, 900, cfg.desc);
+}
+
+async function runFreeSpinsSequence(fsData, bet){
+  state.inFreeSpins = true;
+  state.fsTotal = fsData.initialSpinsAwarded;
+  state.fsRemaining = fsData.spinsPlayed;
+  state.globalMultiplier = fsData.globalMultiplierStart;
+  elMult.textContent = state.globalMultiplier + "x";
+  refreshHud();
+
+  let spinsAwardedSoFar = fsData.initialSpinsAwarded;
+
+  for (let i=0;i<fsData.spins.length;i++){
+    const seq = fsData.spins[i];
+    state.fsTotal = spinsAwardedSoFar;
+    updateFsInfo();
+    await playSpinSequence(seq, true);
+    if (seq.retrigger){
+      spinsAwardedSoFar += RETRIGGER_SPINS;
+      await showBanner("RETRIGGER!", 0xff8a3d, 800, "+" + RETRIGGER_SPINS + " FREE SPINS");
+    }
+  }
+  updateFsInfo();
+  fsInfoText.text = "";
+}
+
+btnSpin.onclick = () => runSpin(null);
+
+/* ---------------------------------------------------------------------------------------
+   11) BOOT
+   --------------------------------------------------------------------------------------- */
+buildBackground();
+setGridInstant(generateGrid(BASE_WEIGHTS, null, null));
+refreshHud();
+
+window.addEventListener("load", () => { playIntro(); });
+// Fallback in case 'load' already fired
+if (document.readyState === "complete") playIntro();
+</script>
+</body>
+</html>

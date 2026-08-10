@@ -1274,6 +1274,7 @@ void main(void)\r
     text-shadow:0 0 6px #f5c542cc, 0 2px 2px #000c;
   }
   .buy-bonus-btn:hover{ filter:brightness(1.15); }
+  .buy-bonus-btn:disabled{ filter:grayscale(0.7) brightness(0.55); cursor:not-allowed; animation:none; }
   @keyframes buyBonusPulse{
     0%,100%{ box-shadow:0 0 6px 0px rgba(245,197,66,0.5); transform:scale(1); }
     50%{ box-shadow:0 0 18px 5px rgba(245,197,66,0.9); transform:scale(1.015); }
@@ -1319,6 +1320,37 @@ void main(void)\r
     flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:10px;
     padding:12px 14px 18px; background:transparent;
   }
+  .spin-cluster{ display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+  .mini-ctrl-btn{
+    flex:0 0 auto; width:32px; height:32px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #16233a, #060c16 85%);
+    border:1px solid var(--panel-border); color:var(--text-dim); font-size:13px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .mini-ctrl-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .mini-ctrl-btn.active{
+    border-color:#22e5ff; color:#22e5ff; background:radial-gradient(circle at 35% 30%, #123044, #060c16 85%);
+    box-shadow:0 0 10px 1px #22e5ff66;
+  }
+  .autobet-wrap{ position:relative; }
+  .autobet-wrap .mini-ctrl-btn.running{
+    border-color:#ff5566; color:#ff5566; box-shadow:0 0 10px 1px #ff556666;
+    font-size:9px; font-weight:800;
+  }
+  .autobet-popover{
+    position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%) translateY(6px);
+    display:grid; grid-template-columns:1fr 1fr; gap:5px;
+    background:linear-gradient(180deg,#0c1626,#050a14); border:1px solid var(--gold-dark); border-radius:10px;
+    padding:8px; box-shadow:0 4px 16px #000b;
+    opacity:0; pointer-events:none; transition:opacity .15s ease, transform .15s ease;
+    z-index:10;
+  }
+  .autobet-popover.open{ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0); }
+  .autobet-popover button{
+    width:44px; height:30px; border-radius:6px; border:1px solid var(--panel-border);
+    background:#0f1728; color:var(--text); font-size:12px; font-weight:700; cursor:pointer;
+  }
+  .autobet-popover button:hover{ border-color:var(--cyan); color:var(--cyan); }
   .readout-panel{
     flex:1 1 0; min-width:0; max-width:150px;
     background:linear-gradient(180deg,#0c1626,#050a14);
@@ -1516,7 +1548,19 @@ void main(void)\r
         <div class="lbl fs-lbl"><span class="hourglass-glyph small"></span>Free Spins</div>
         <div class="val" id="val-freespins">0</div>
       </div>
-      <div id="btn-spin-wrap"><button id="btn-spin" title="Girar"><span class="play-tri"></span></button></div>
+      <div class="spin-cluster">
+        <button class="mini-ctrl-btn" id="btn-turbo" title="Turbo">⚡</button>
+        <div id="btn-spin-wrap"><button id="btn-spin" title="Girar"><span class="play-tri"></span></button></div>
+        <div class="autobet-wrap">
+          <button class="mini-ctrl-btn" id="btn-autobet" title="Autobet">🔁</button>
+          <div class="autobet-popover" id="autobet-popover">
+            <button data-n="10">10</button>
+            <button data-n="25">25</button>
+            <button data-n="50">50</button>
+            <button data-n="100">100</button>
+          </div>
+        </div>
+      </div>
       <button class="buy-bonus-btn" id="btn-buybonus" title="Comprar Free Spins">
         <span class="bb-diamond">◆</span>
         <span class="bb-text">BUY<br>BONUS</span>
@@ -1913,6 +1957,8 @@ const state = {
   fsIndex: 0,
   fsTotal: 0,
   runningWin: 0,
+  turbo: false,
+  autobet: { active:false, remaining:0, stopOnFreeSpins:false },
 };
 function currentBet(){ return BET_STEPS[state.betIndex]; }
 
@@ -1951,10 +1997,10 @@ function pulseMultBox(){
 }
 function setSpinning(v){
   state.spinning = v;
-  btnSpin.disabled = v;
-  btnMenu.disabled = v;
-  document.getElementById("bet-inc").style.pointerEvents = v ? "none" : "auto";
-  document.getElementById("bet-dec").style.pointerEvents = v ? "none" : "auto";
+  btnSpin.disabled = v || state.autobet.active;
+  btnMenu.disabled = v || state.autobet.active;
+  document.getElementById("bet-inc").style.pointerEvents = (v || state.autobet.active) ? "none" : "auto";
+  document.getElementById("bet-dec").style.pointerEvents = (v || state.autobet.active) ? "none" : "auto";
 }
 
 document.getElementById("bet-inc").onclick = () => {
@@ -2514,15 +2560,17 @@ function buildTile(symbol, value){
 /* ---------------------------------------------------------------------------------------
    7) GRID RENDERER + ANIMATION HELPERS
    --------------------------------------------------------------------------------------- */
-function wait(ms){ return new Promise(res => setTimeout(res, ms)); }
+const TURBO_FACTOR = 0.28; // spin/cascade/banner timings shrink to ~28% with Turbo on
+function wait(ms){ return new Promise(res => setTimeout(res, state.turbo ? ms*TURBO_FACTOR : ms)); }
 function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
 function easeOutBack(t){ const c1=1.70158, c3=c1+1; return 1+c3*Math.pow(t-1,3)+c1*Math.pow(t-1,2); }
 function tween(obj, props, duration, easing=easeOutCubic){
+  const dur = Math.max(30, state.turbo ? duration*TURBO_FACTOR : duration);
   return new Promise(resolve => {
     const start = {}; for (const k in props) start[k]=obj[k];
     const t0 = performance.now();
     function step(now){
-      const t = Math.min(1, (now-t0)/duration);
+      const t = Math.min(1, (now-t0)/dur);
       const e = easing(t);
       for (const k in props) obj[k] = start[k] + (props[k]-start[k])*e;
       if (t < 1) requestAnimationFrame(step); else resolve();
@@ -2676,8 +2724,54 @@ function highlightWin(positions, color=0xffe27a){
 }
 
 /* --- floating banners / text popups --- */
-function showBanner(text, color=0x22e5ff, holdMs=900, sub="", imgKey=null){
+function drawWingFlourish(color, mirror){
+  // stylised angular energy wing, flanking the big win text -- pure Graphics, no art needed
+  const g = new PIXI.Graphics();
+  const s = mirror ? -1 : 1;
+  g.beginFill(color, 0.85);
+  g.moveTo(0,0)
+    .lineTo(s*46,-10).lineTo(s*80,-2).lineTo(s*60,10)
+    .lineTo(s*70,20).lineTo(s*40,18).lineTo(s*50,30)
+    .lineTo(s*18,14).lineTo(0,18)
+    .closePath();
+  g.endFill();
+  g.beginFill(0xffffff, 0.35);
+  g.moveTo(0,4).lineTo(s*40,-4).lineTo(s*22,10).closePath();
+  g.endFill();
+  g.filters = [new PIXI.BlurFilter(0.6)];
+  return g;
+}
+
+function spawnCoinRain(count=26){
+  for (let i=0;i<count;i++){
+    const coin = new PIXI.Graphics();
+    coin.beginFill(0xf5c542).lineStyle(1.5, 0xffe9a8, 1).drawCircle(0,0,7).endFill();
+    coin.beginFill(0xffe9a8, 0.8).drawCircle(0,-1.5,3).endFill();
+    coin.x = Math.random()*CANVAS_W;
+    coin.y = -20 - Math.random()*160;
+    coin.rotation = Math.random()*Math.PI;
+    layerBanner.addChild(coin);
+    const dur = 1100 + Math.random()*700;
+    const driftX = coin.x + (Math.random()*80 - 40);
+    tween(coin, {y: CANVAS_H + 30, x: driftX}, dur).then(() => { if (coin.parent) layerBanner.removeChild(coin); });
+    (function spin(){ coin.rotation += 0.15; if (coin.parent) requestAnimationFrame(spin); })();
+  }
+}
+
+function showBanner(text, color=0x22e5ff, holdMs=900, sub="", imgKey=null, opts={}){
+  const { amountText=null, big=false } = opts;
   return new Promise(async resolve => {
+    // full-bleed colour wash behind the text on big wins, so the celebration
+    // reads as taking over the whole screen rather than a small centred toast
+    let backdrop = null;
+    if (big){
+      backdrop = new PIXI.Graphics();
+      backdrop.beginFill(color, 0.22).drawRect(0,0,CANVAS_W,CANVAS_H).endFill();
+      backdrop.alpha = 0;
+      layerBanner.addChild(backdrop);
+      tween(backdrop, {alpha:1}, 220);
+    }
+
     const c = new PIXI.Container();
 
     if (imgKey && TEX[imgKey]){
@@ -2693,25 +2787,54 @@ function showBanner(text, color=0x22e5ff, holdMs=900, sub="", imgKey=null){
       requestAnimationFrame(spin);
     }
 
+    const fontSize = big ? 62 : 30;
     const t = new PIXI.Text(text, {
-      fontFamily:"Segoe UI", fontWeight:"900", fontSize:30, letterSpacing:2,
-      fill:[0xffffff,color], stroke:0x00040a, strokeThickness:6,
-      dropShadow:true, dropShadowColor:color, dropShadowBlur:14, dropShadowDistance:0
+      fontFamily:"Segoe UI", fontWeight:"900", fontSize, letterSpacing:2,
+      fill:[0xffffff,color], stroke:0x00040a, strokeThickness:big ? 9 : 6,
+      dropShadow:true, dropShadowColor:color, dropShadowBlur:big ? 28 : 14, dropShadowDistance:0
     });
     t.anchor.set(0.5);
     if (imgKey) t.y = 60;
     c.addChild(t);
-    if (sub){
+
+    if (big){
+      const halfW = t.width/2;
+      const wingScale = 1.7;
+      const wingL = drawWingFlourish(color, true);  wingL.x = -halfW - 8; wingL.y = -2; wingL.scale.set(wingScale);
+      const wingR = drawWingFlourish(color, false); wingR.x =  halfW + 8; wingR.y = -2; wingR.scale.set(wingScale);
+      c.addChild(wingL, wingR);
+    }
+
+    if (amountText){
+      const a = new PIXI.Text(amountText, {
+        fontFamily:"Segoe UI", fontWeight:"900", fontSize:big ? 46 : 34, letterSpacing:1,
+        fill:[0xfff6d8,0xf5c542], stroke:0x1a0f00, strokeThickness:7,
+        dropShadow:true, dropShadowColor:0xf5c542, dropShadowBlur:18, dropShadowDistance:0
+      });
+      a.anchor.set(0.5); a.y = t.y + fontSize*0.85;
+      c.addChild(a);
+    } else if (sub){
       const s = new PIXI.Text(sub, {fontFamily:"Segoe UI", fontWeight:"700", fontSize:13, fill:0xffffff, letterSpacing:1});
       s.anchor.set(0.5); s.y = t.y + 26;
       c.addChild(s);
     }
-    c.x = CANVAS_W/2; c.y = CANVAS_H*0.38; c.alpha = 0; c.scale.set(0.6);
+
+    // scale the whole banner up so it dominates the canvas on big wins
+    let finalScale = 1;
+    if (big){
+      const targetW = CANVAS_W * 0.9;
+      finalScale = Math.min(1.9, Math.max(1, targetW / c.width));
+    }
+    c.x = CANVAS_W/2; c.y = CANVAS_H*0.36; c.alpha = 0; c.scale.set(finalScale*0.6);
     layerBanner.addChild(c);
-    await Promise.all([tween(c,{alpha:1},220), tween(c.scale,{x:1,y:1},260, easeOutBack)]);
+    if (big) spawnCoinRain(34);
+    await Promise.all([tween(c,{alpha:1},220), tween(c.scale,{x:finalScale,y:finalScale},280, easeOutBack)]);
     await wait(holdMs);
-    await Promise.all([tween(c,{alpha:0},260), tween(c.scale,{x:1.15,y:1.15},260)]);
+    const fadeOps = [tween(c,{alpha:0},260), tween(c.scale,{x:finalScale*1.12,y:finalScale*1.12},260)];
+    if (backdrop) fadeOps.push(tween(backdrop,{alpha:0},260));
+    await Promise.all(fadeOps);
     layerBanner.removeChild(c);
+    if (backdrop) layerBanner.removeChild(backdrop);
     resolve();
   });
 }
@@ -3021,7 +3144,7 @@ async function runSpin(forceMode){
       await screenFlash(tier.color, 0.7);
       spawnBoardSparks(CANVAS_W/2, GRID_Y + GRID_H/2, 60);
     }
-    await showBanner(tier.text, tier.color, 1400, tier.sub);
+    await showBanner(tier.text, tier.color, 1600, tier.sub, null, { big, amountText: big ? fmt(result.totalWin) : null });
   }
 
   setSpinning(false);
@@ -3063,7 +3186,69 @@ async function runFreeSpinsSequence(fsData, bet){
   updateFsInfo();
 }
 
-btnSpin.onclick = () => runSpin(null);
+btnSpin.onclick = () => { if (state.autobet.active) return; runSpin(null); };
+
+/* ---------------------------------------------------------------------------------------
+   10b) TURBO + AUTOBET
+   --------------------------------------------------------------------------------------- */
+const btnTurbo = $("#btn-turbo");
+const btnAutobet = $("#btn-autobet");
+const autobetPopover = $("#autobet-popover");
+
+btnTurbo.onclick = () => {
+  state.turbo = !state.turbo;
+  btnTurbo.classList.toggle("active", state.turbo);
+};
+
+function closeAutobetPopover(){ autobetPopover.classList.remove("open"); }
+
+btnAutobet.onclick = () => {
+  if (state.autobet.active){
+    stopAutobet();
+    return;
+  }
+  autobetPopover.classList.toggle("open");
+};
+document.addEventListener("click", e => {
+  if (!e.target.closest(".autobet-wrap")) closeAutobetPopover();
+});
+autobetPopover.querySelectorAll("button").forEach(b => {
+  b.onclick = (e) => {
+    e.stopPropagation();
+    closeAutobetPopover();
+    startAutobet(parseInt(b.dataset.n, 10));
+  };
+});
+
+async function startAutobet(count){
+  if (state.spinning || state.autobet.active) return;
+  state.autobet.active = true;
+  state.autobet.remaining = count;
+  updateAutobetUI();
+  while (state.autobet.active && state.autobet.remaining > 0){
+    const bet = currentBet();
+    const cfg = MODES[state.mode];
+    const cost = bet * cfg.costMultiplier;
+    if (cost > state.balance){ flashInsufficientFunds(); break; }
+    state.autobet.remaining--;
+    updateAutobetUI();
+    await runSpin(null);
+  }
+  state.autobet.active = false;
+  state.autobet.remaining = 0;
+  updateAutobetUI();
+}
+function stopAutobet(){
+  state.autobet.active = false;
+  updateAutobetUI();
+}
+function updateAutobetUI(){
+  btnAutobet.classList.toggle("running", state.autobet.active);
+  btnAutobet.textContent = state.autobet.active ? String(state.autobet.remaining) : "🔁";
+  btnAutobet.title = state.autobet.active ? "Detener Autobet (" + state.autobet.remaining + " restantes)" : "Autobet";
+  btnSpin.disabled = state.spinning || state.autobet.active;
+  $("#btn-buybonus").disabled = state.autobet.active;
+}
 
 /* ---------------------------------------------------------------------------------------
    11) BOOT

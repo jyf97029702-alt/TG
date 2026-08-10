@@ -1135,10 +1135,12 @@ void main(void)\r
   html,body{
     margin:0; padding:0; width:100%; height:100%;
     background:
-      radial-gradient(ellipse at 20% -10%, #3a1a5c33 0%, transparent 55%),
-      radial-gradient(ellipse at 85% 10%, #0a2a4433 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 0%, #1fd9ff1c 0%, transparent 20%),
+      radial-gradient(ellipse at 8% -10%, #7a3fd13d 0%, transparent 32%),
+      radial-gradient(ellipse at 94% 4%, #22e5ff26 0%, transparent 28%),
+      radial-gradient(ellipse at 90% 95%, #b26bff1c 0%, transparent 26%),
       radial-gradient(ellipse at 50% -10%, #0c1830 0%, var(--bg-1) 45%, var(--bg-0) 100%);
-    background-size: 200% 200%, 200% 200%, 100% 100%;
+    background-size: 140% 140%, 160% 160%, 160% 160%, 170% 170%, 100% 100%;
     animation: nebulaDrift 22s ease-in-out infinite;
     color:var(--text);
     font-family:'Segoe UI', 'Trebuchet MS', Arial, sans-serif;
@@ -1146,8 +1148,8 @@ void main(void)\r
     -webkit-font-smoothing:antialiased;
   }
   @keyframes nebulaDrift{
-    0%,100%{ background-position: 0% 0%, 100% 0%, 0 0; }
-    50%{ background-position: 30% 20%, 70% 30%, 0 0; }
+    0%,100%{ background-position: 0% 0%, 0% 0%, 100% 0%, 100% 100%, 0 0; }
+    50%{ background-position: 15% 10%, 30% 20%, 70% 30%, 80% 70%, 0 0; }
   }
   #app-root{
     position:relative;
@@ -1178,20 +1180,16 @@ void main(void)\r
     width:min(96vw, 580px);
     height:min(96vh, 940px);
     display:flex; flex-direction:column;
-    border:1px solid #2a1c05;
-    border-radius:16px;
-    background:linear-gradient(180deg, #081018 0%, #04070f 100%);
-    box-shadow:0 0 60px #00e5ff1c, 0 0 130px #ffcc0014, inset 0 0 46px #00121f;
+    border:none;
+    background:transparent;
     overflow:hidden;
   }
 
   /* ---------- ornate header ---------- */
   #hud-top{
     flex:0 0 auto; position:relative;
-    padding:12px 10px 10px;
-    background:radial-gradient(ellipse at 50% 0%, #10263c 0%, #060c16 75%);
-    border-bottom:2px solid var(--gold-dark);
-    box-shadow:0 2px 12px #000a;
+    padding:14px 10px 6px;
+    background:transparent;
     z-index:5;
   }
   .top-icons-right{ position:absolute; top:8px; right:8px; display:flex; gap:5px; z-index:6; }
@@ -1202,12 +1200,6 @@ void main(void)\r
     display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer;
   }
   .icon-corner-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
-  .demo-badge{
-    position:absolute; left:10px; top:14px;
-    font-size:8px; letter-spacing:1px; padding:3px 7px; border-radius:20px;
-    border:1px solid var(--gold-dark); color:var(--gold);
-    background:#1a1204a0;
-  }
   .logo-wrap{ text-align:center; padding:2px 40px 4px; }
   .logo-line1{
     font-family:Georgia,'Times New Roman',serif; font-weight:700; font-size:26px; letter-spacing:6px;
@@ -1231,10 +1223,10 @@ void main(void)\r
     50%{ filter:brightness(1.25) drop-shadow(0 0 8px currentColor); }
   }
   .hourglass-glyph{
-    display:inline-block; width:14px; height:18px; position:relative; -webkit-text-fill-color:initial;
-    background:linear-gradient(180deg, var(--magenta), var(--gold));
+    display:inline-block; width:22px; height:30px; margin:0 2px; position:relative; -webkit-text-fill-color:initial;
+    background:linear-gradient(180deg, var(--gold-light), var(--cyan) 50%, var(--gold));
     clip-path:polygon(0 0,100% 0,58% 46%,100% 100%,0 100%,42% 46%);
-    filter:drop-shadow(0 0 5px #e347ffaa);
+    filter:drop-shadow(0 0 8px #22e5ffcc) drop-shadow(0 0 4px #f5c542aa);
     animation: hourglassSpin 6s linear infinite;
     transform-style:preserve-3d;
   }
@@ -1246,21 +1238,18 @@ void main(void)\r
   .subtitle-studio{
     text-align:center; font-size:8px; letter-spacing:3px; color:#8fa8c4; margin-top:3px;
   }
-  .stats-row{ display:flex; justify-content:space-between; gap:8px; margin-top:8px; padding:0 2px; }
+  .stats-row{ display:flex; justify-content:center; align-items:baseline; gap:22px; margin-top:6px; padding:0 2px; }
   .stat-box{
-    flex:1; position:relative; background:linear-gradient(180deg,#0c1626,#050a14);
-    border:1px solid var(--gold-dark); border-radius:7px;
-    padding:5px 6px; text-align:center;
-    box-shadow:inset 0 1px 0 #ffdf8a30, 0 2px 6px #0008, 0 0 0px rgba(245,197,66,0);
+    position:relative; background:transparent; border:none; padding:0; text-align:center;
     animation: statGlow 3.2s ease-in-out infinite;
   }
   .stat-bet{ animation-delay: 1.6s; }
   @keyframes statGlow{
-    0%,100%{ box-shadow:inset 0 1px 0 #ffdf8a30, 0 2px 6px #0008, 0 0 0px rgba(245,197,66,0); border-color:var(--gold-dark); }
-    50%{ box-shadow:inset 0 1px 0 #ffdf8a30, 0 2px 6px #0008, 0 0 10px 1px rgba(245,197,66,0.45); border-color:var(--gold); }
+    0%,100%{ filter:drop-shadow(0 0 0px rgba(245,197,66,0)); }
+    50%{ filter:drop-shadow(0 0 6px rgba(245,197,66,0.55)); }
   }
-  .stat-box .lbl{ font-size:7.5px; letter-spacing:1.5px; color:var(--gold); text-transform:uppercase; opacity:.85; }
-  .stat-box .val{ font-size:14px; font-weight:700; color:var(--text); }
+  .stat-box .lbl{ font-size:7.5px; letter-spacing:2px; color:var(--gold); text-transform:uppercase; opacity:.8; }
+  .stat-box .val{ font-size:13px; font-weight:700; color:var(--text); text-shadow:0 0 8px #00121f; }
   .stat-bet .val{ display:flex; align-items:center; justify-content:center; gap:6px; }
   .bet-btn{
     width:16px; height:16px; border-radius:4px; border:1px solid var(--panel-border);
@@ -1328,8 +1317,7 @@ void main(void)\r
   /* ---------- bottom HUD ---------- */
   #hud-bottom{
     flex:0 0 auto; display:flex; align-items:center; justify-content:center; gap:10px;
-    padding:10px 14px 16px; background:linear-gradient(0deg,#050b12,#0a1120);
-    border-top:2px solid var(--gold-dark);
+    padding:12px 14px 18px; background:transparent;
   }
   .readout-panel{
     flex:1 1 0; min-width:0; max-width:150px;
@@ -1424,9 +1412,9 @@ void main(void)\r
   .mode-card .mc-name{ font-weight:800; font-size:11.5px; letter-spacing:1px; margin-top:2px; }
   .mode-card .mc-desc{ font-size:9px; color:var(--text-dim); line-height:1.35; min-height:24px; }
   .mode-card .mc-cost{
-    margin-top:2px; padding:3px 12px; border-radius:20px; font-size:12px; font-weight:900;
+    margin-top:2px; padding:4px 10px; border-radius:20px; font-size:10.5px; font-weight:900;
     color:#02060c; background:linear-gradient(180deg, var(--tier-c,#f5c542), color-mix(in srgb, var(--tier-c,#f5c542) 60%, #000));
-    white-space:nowrap;
+    white-space:nowrap; max-width:100%; overflow:hidden; text-overflow:ellipsis;
   }
   .modal-close{
     display:block; margin:14px auto 0; padding:8px 22px; border-radius:20px;
@@ -1481,7 +1469,6 @@ void main(void)\r
 
     <!-- ===== ORNATE HEADER ===== -->
     <div id="hud-top">
-      <div class="demo-badge" id="demo-badge">PLAY FOR FUN</div>
       <div class="top-icons-right">
         <button class="icon-corner-btn" id="btn-paytable" title="Pagos">👁</button>
         <button class="icon-corner-btn" id="btn-help" title="Reglas">?</button>
@@ -1995,7 +1982,9 @@ function buildModeList(){
     const card = document.createElement("div");
     card.className = "mode-card" + (state.mode === key ? " active-mode" : "");
     card.style.setProperty("--tier-c", tier.color);
-    const costText = cfg.forcesFreeSpins ? ("x" + cfg.costMultiplier) : (cfg.costMultiplier===1 ? "Base" : "x" + cfg.costMultiplier);
+    const costText = cfg.forcesFreeSpins
+      ? fmt(currentBet() * cfg.costMultiplier) + " (x" + cfg.costMultiplier + ")"
+      : (cfg.costMultiplier===1 ? "Base" : "x" + cfg.costMultiplier);
     card.innerHTML = `
       <div class="mc-icon">${tier.icon}</div>
       <div class="mc-name">${cfg.label.toUpperCase()}</div>

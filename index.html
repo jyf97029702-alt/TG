@@ -1222,25 +1222,39 @@ void main(void)\r
   .icon-corner-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
   .util-icons-row{ display:flex; justify-content:center; gap:8px; margin-top:4px; }
   .chest-btn{
-    display:flex; align-items:center; justify-content:center; gap:10px;
-    flex:0 0 auto; width:calc(100% - 24px); margin:2px 12px 4px; padding:6px 16px;
+    position:relative;
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    flex:0 0 auto; width:calc(100% - 24px); height:74px; margin:14px 12px 8px; padding:6px 20px 6px 88px;
     background:linear-gradient(180deg,#1a1204,#0c0800);
-    border:2px solid var(--gold); border-radius:12px;
+    border:2px solid var(--gold); border-radius:14px;
     cursor:pointer; font-family:inherit;
     box-shadow:0 0 0px 0px #f5c54200, inset 0 1px 0 #ffdf8a40, 0 4px 14px #000c;
     animation: chestPulse 1.7s ease-in-out infinite;
   }
   @keyframes chestPulse{
-    0%,100%{ box-shadow:0 0 8px 1px #f5c54255, inset 0 1px 0 #ffdf8a40, 0 4px 14px #000c; border-color:var(--gold); }
-    50%{ box-shadow:0 0 22px 6px #f5c542aa, inset 0 1px 0 #ffdf8a40, 0 4px 14px #000c; border-color:#fff6d8; }
+    0%,100%{ box-shadow:0 0 10px 2px #f5c54255, inset 0 1px 0 #ffdf8a40, 0 4px 14px #000c; border-color:var(--gold); }
+    50%{ box-shadow:0 0 26px 7px #f5c542aa, inset 0 1px 0 #ffdf8a40, 0 4px 14px #000c; border-color:#fff6d8; }
   }
-  .chest-img{ width:56px; height:auto; flex:0 0 auto; filter:drop-shadow(0 0 10px #b26bffaa) drop-shadow(0 0 6px #f5c542cc); }
+  .chest-btn::before{
+    content:""; position:absolute; left:2px; top:50%; transform:translateY(-50%);
+    width:96px; height:96px; border-radius:50%; z-index:1; pointer-events:none;
+    background:radial-gradient(circle, #b26bffaa 0%, #f5c54277 40%, transparent 72%);
+  }
+  .chest-img{
+    position:absolute; left:6px; top:50%; width:100px; height:auto; z-index:2;
+    transform:translateY(-50%) rotate(-2deg);
+    animation: chestFloat 2.4s ease-in-out infinite;
+  }
+  @keyframes chestFloat{
+    0%,100%{ transform:translateY(-50%) rotate(-2deg); }
+    50%{ transform:translateY(-54%) rotate(2deg); }
+  }
   .chest-text{
-    font-family:'Cinzel',serif; font-weight:900; font-size:18px; letter-spacing:2px; line-height:1.15;
+    font-family:'Cinzel',serif; font-weight:900; font-size:21px; letter-spacing:2px; line-height:1.15;
     background:linear-gradient(180deg, #fff6d8, var(--gold) 55%, var(--gold-dark));
     -webkit-background-clip:text; background-clip:text; color:transparent;
     text-shadow:0 0 10px #f5c54277;
-    text-align:left;
+    text-align:center;
   }
   .chest-btn:disabled{ filter:grayscale(0.7) brightness(0.55); cursor:not-allowed; animation:none; }
   .corner-box{
@@ -1641,8 +1655,7 @@ void main(void)\r
 
     <!-- ===== BUY BONUS (CHEST) ===== -->
     <button class="chest-btn" id="btn-buybonus" title="Comprar Free Spins">
-      <img class="chest-img" src="" alt="" id="chest-img">
-      <span class="chest-text">COMPRAR<br>BONUS</span>
+      <img class="chest-img" src="" alt="Comprar Free Spins" id="chest-img">
     </button>
 
     <!-- ===== BOTTOM HUD ===== -->
@@ -2706,45 +2719,77 @@ function setGridInstant(grid){
   });
 }
 
+function startFrameVibration(strength=6, intervalMs=45){
+  const originX = layerGrid.x, originY = layerGrid.y;
+  const handle = setInterval(() => {
+    layerGrid.x = originX + (Math.random()*2-1)*strength;
+    layerGrid.y = originY + (Math.random()*2-1)*strength;
+  }, intervalMs);
+  return () => { clearInterval(handle); layerGrid.x = originX; layerGrid.y = originY; };
+}
+
 async function spinReelIntro(finalGrid){
-  // quick flicker per column then settle, to sell a "reel spin" feel
+  // real spin feel: each column cycles rapidly through random symbols (with a
+  // faint cyan/purple energy streak behind it) before the true result drops in
+  // with a weighted bounce -- replaces the old single-flicker-then-drop version
   layerGrid.removeChildren();
   tileSlots = new Array(GRID_CELLS).fill(null);
   const flickerSyms = PAYING_SYMBOLS.concat([WILD]);
-  const colTiles = Array.from({length:COLS}, ()=>[]);
-  for (let r=0;r<ROWS;r++) for (let c=0;c<COLS;c++){
-    const i = idx(r,c);
-    const t = buildTile(flickerSyms[Math.floor(Math.random()*flickerSyms.length)], null);
-    placeTileAt(t, i); t.y -= 260; t.alpha = 0.85;
-    layerGrid.addChild(t); colTiles[c].push({tile:t, i});
-  }
-  const flickerHandles = colTiles.map((col, c) => {
-    return setInterval(() => {
-      col.forEach(({tile}) => {
-        layerGrid.removeChild(tile);
-      });
-    }, 60);
-  });
+  const stopFrameShake = startFrameVibration(3, 40);
+
   const proms = [];
   for (let c=0;c<COLS;c++){
     proms.push((async ()=>{
-      await wait(140*c);
+      const cycleDur = 260 + c*130;
+      const streak = new PIXI.Graphics();
+      const streakColor = c%2===0 ? 0x22e5ff : 0xb26bff;
+      streak.beginFill(streakColor, 0.09).drawRect(-CELL_W/2-2, -6, CELL_W+4, GRID_H+12).endFill();
+      const sx = cellCenter(idx(0,c)).x;
+      streak.x = sx; streak.y = GRID_Y + GRID_H/2;
+      layerGrid.addChild(streak);
+
+      const t0 = performance.now();
+      while (performance.now() - t0 < cycleDur){
+        for (let r=0;r<ROWS;r++){
+          const i = idx(r,c);
+          const old = tileSlots[i];
+          if (old){ layerGrid.removeChild(old); }
+          const tile = buildTile(flickerSyms[Math.floor(Math.random()*flickerSyms.length)], null);
+          placeTileAt(tile, i);
+          tile.alpha = 0.78;
+          layerGrid.addChild(tile);
+          tileSlots[i] = tile;
+        }
+        await wait(55);
+      }
+      layerGrid.removeChild(streak);
+      for (let r=0;r<ROWS;r++){
+        const i = idx(r,c);
+        const old = tileSlots[i];
+        if (old){ layerGrid.removeChild(old); tileSlots[i] = null; }
+      }
+
+      const dropProms = [];
       for (let r=0;r<ROWS;r++){
         const i = idx(r,c);
         const cell = finalGrid[i];
-        const t = buildTile(cell.symbol, cell.value);
-        placeTileAt(t, i);
+        const tile = buildTile(cell.symbol, cell.value);
+        placeTileAt(tile, i);
         const target = cellCenter(i);
-        t.y = target.y - 420 - r*30;
-        layerGrid.addChild(t);
-        tileSlots[i] = t;
-        tween(t, {y: target.y}, 420 + r*35, easeOutBack);
+        tile.y = target.y - 420 - r*30;
+        layerGrid.addChild(tile);
+        tileSlots[i] = tile;
+        dropProms.push(tween(tile, {y: target.y}, 380 + r*32, easeOutBack));
       }
+      await Promise.all(dropProms);
+      // weighted "impact" as the column settles -- brief flash at its base
+      const base = cellCenter(idx(ROWS-1,c));
+      spawnBurst(base.x, GRID_Y + GRID_H, streakColor, 7);
     })());
   }
   await Promise.all(proms);
-  flickerHandles.forEach(h => clearInterval(h));
-  await wait(120);
+  stopFrameShake();
+  await wait(100);
 }
 
 function computeColumnTumbleMap(removePositions){
@@ -2850,37 +2895,106 @@ function drawWingFlourish(color, mirror){
   return g;
 }
 
-function spawnCoinRain(count=26){
+function drawFallingCoin(){
+  const g = new PIXI.Graphics();
+  g.beginFill(0xf5c542).lineStyle(1.5, 0xffe9a8, 1).drawCircle(0,0,7).endFill();
+  g.beginFill(0xffe9a8, 0.8).drawCircle(0,-1.5,3).endFill();
+  return g;
+}
+function drawFallingShard(){
+  const g = new PIXI.Graphics();
+  g.beginFill(0x22e5ff, 0.9).lineStyle(1, 0x9fe9ff, 0.9)
+    .drawPolygon([0,-9, 5,-1, 3,9, -3,9, -5,-1]).endFill();
+  return g;
+}
+function drawFallingMote(){
+  const g = new PIXI.Graphics();
+  g.beginFill(0xb26bff, 0.85).drawCircle(0,0,4).endFill();
+  g.beginFill(0xf0d8ff, 0.6).drawCircle(0,0,1.6).endFill();
+  return g;
+}
+function spawnCoinRain(count=26, mixed=false){
+  const makers = mixed ? [drawFallingCoin, drawFallingCoin, drawFallingShard, drawFallingMote] : [drawFallingCoin];
   for (let i=0;i<count;i++){
-    const coin = new PIXI.Graphics();
-    coin.beginFill(0xf5c542).lineStyle(1.5, 0xffe9a8, 1).drawCircle(0,0,7).endFill();
-    coin.beginFill(0xffe9a8, 0.8).drawCircle(0,-1.5,3).endFill();
-    coin.x = Math.random()*CANVAS_W;
-    coin.y = -20 - Math.random()*160;
-    coin.rotation = Math.random()*Math.PI;
-    layerBanner.addChild(coin);
-    const dur = 1100 + Math.random()*700;
-    const driftX = coin.x + (Math.random()*80 - 40);
-    tween(coin, {y: CANVAS_H + 30, x: driftX}, dur).then(() => { if (coin.parent) layerBanner.removeChild(coin); });
-    (function spin(){ coin.rotation += 0.15; if (coin.parent) requestAnimationFrame(spin); })();
+    const make = makers[Math.floor(Math.random()*makers.length)];
+    const p = make();
+    p.x = Math.random()*CANVAS_W;
+    p.y = -20 - Math.random()*220;
+    p.rotation = Math.random()*Math.PI;
+    layerBanner.addChild(p);
+    const dur = 1000 + Math.random()*900;
+    const driftX = p.x + (Math.random()*100 - 50);
+    tween(p, {y: CANVAS_H + 30, x: driftX}, dur).then(() => { if (p.parent) layerBanner.removeChild(p); });
+    (function spin(){ p.rotation += 0.13; if (p.parent) requestAnimationFrame(spin); })();
   }
+}
+
+function drawGodRays(color, radius){
+  const g = new PIXI.Graphics();
+  const spokes = 20;
+  for (let i=0;i<spokes;i++){
+    const a0 = (i/spokes)*Math.PI*2;
+    const half = i%2===0 ? 0.075 : 0.04;
+    g.beginFill(color, i%2===0 ? 0.16 : 0.07);
+    g.moveTo(0,0)
+      .lineTo(Math.cos(a0-half)*radius, Math.sin(a0-half)*radius)
+      .lineTo(Math.cos(a0+half)*radius, Math.sin(a0+half)*radius)
+      .closePath();
+    g.endFill();
+  }
+  return g;
+}
+
+function drawMedallionRing(color, radius=168){
+  const g = new PIXI.Graphics();
+  g.lineStyle(9, 0x2a1c05, 1).drawCircle(0,0,radius);
+  g.lineStyle(4, color, 0.95).drawCircle(0,0,radius-7);
+  g.lineStyle(1.6, 0xffe9a8, 0.95).drawCircle(0,0,radius-13);
+  g.lineStyle(1, color, 0.35).drawCircle(0,0,radius+8);
+  for (let i=0;i<8;i++){
+    const a = i*(Math.PI*2/8) + Math.PI/8;
+    const gx = Math.cos(a)*radius, gy = Math.sin(a)*radius;
+    const gem = new PIXI.Graphics();
+    gem.beginFill(0x2a1c05).lineStyle(1.4, 0xffe9a8, 1)
+      .drawPolygon(regularPolygonPoints(0,0,9,4,-Math.PI/2)).endFill();
+    gem.beginFill(color, 0.95).drawPolygon(regularPolygonPoints(0,0,4.5,4,-Math.PI/2)).endFill();
+    gem.x = gx; gem.y = gy;
+    g.addChild(gem);
+  }
+  return g;
 }
 
 function showBanner(text, color=0x22e5ff, holdMs=900, sub="", imgKey=null, opts={}){
   const { amountText=null, big=false } = opts;
   return new Promise(async resolve => {
-    // full-bleed colour wash behind the text on big wins, so the celebration
-    // reads as taking over the whole screen rather than a small centred toast
-    let backdrop = null;
+    // full-screen dim + colour wash on big wins, so the celebration takes over
+    // the whole screen and gives the banner full protagonism, per spec
+    let dim = null, wash = null, rays = null;
     if (big){
-      backdrop = new PIXI.Graphics();
-      backdrop.beginFill(color, 0.22).drawRect(0,0,CANVAS_W,CANVAS_H).endFill();
-      backdrop.alpha = 0;
-      layerBanner.addChild(backdrop);
-      tween(backdrop, {alpha:1}, 220);
+      dim = new PIXI.Graphics();
+      dim.beginFill(0x000000, 0.55).drawRect(0,0,CANVAS_W,CANVAS_H).endFill();
+      dim.alpha = 0;
+      layerBanner.addChild(dim);
+
+      wash = new PIXI.Graphics();
+      wash.beginFill(color, 0.20).drawRect(0,0,CANVAS_W,CANVAS_H).endFill();
+      wash.alpha = 0;
+      layerBanner.addChild(wash);
+
+      rays = drawGodRays(color, CANVAS_W*0.9);
+      rays.x = CANVAS_W/2; rays.y = CANVAS_H*0.36; rays.alpha = 0;
+      layerBanner.addChild(rays);
+
+      await Promise.all([tween(dim,{alpha:1},200), tween(wash,{alpha:1},260), tween(rays,{alpha:0.9},320)]);
     }
 
     const c = new PIXI.Container();
+
+    if (big){
+      const medallion = drawMedallionRing(color);
+      medallion.alpha = 0.95;
+      c.addChild(medallion);
+    }
 
     if (imgKey && TEX[imgKey]){
       const art = new PIXI.Sprite(TEX[imgKey]);
@@ -2898,8 +3012,8 @@ function showBanner(text, color=0x22e5ff, holdMs=900, sub="", imgKey=null, opts=
     const fontSize = big ? 62 : 30;
     const t = new PIXI.Text(text, {
       fontFamily:"Cinzel", fontWeight:"900", fontSize, letterSpacing:2,
-      fill:[0xffffff,color], stroke:0x00040a, strokeThickness:big ? 9 : 6,
-      dropShadow:true, dropShadowColor:color, dropShadowBlur:big ? 28 : 14, dropShadowDistance:0
+      fill:[0xffffff,0xfff6d8,color], stroke:0x00040a, strokeThickness:big ? 9 : 6,
+      dropShadow:true, dropShadowColor:color, dropShadowBlur:big ? 30 : 14, dropShadowDistance:0
     });
     t.anchor.set(0.5);
     if (imgKey) t.y = 60;
@@ -2915,9 +3029,9 @@ function showBanner(text, color=0x22e5ff, holdMs=900, sub="", imgKey=null, opts=
 
     if (amountText){
       const a = new PIXI.Text(amountText, {
-        fontFamily:"Orbitron", fontWeight:"900", fontSize:big ? 46 : 34, letterSpacing:1,
-        fill:[0xfff6d8,0xf5c542], stroke:0x1a0f00, strokeThickness:7,
-        dropShadow:true, dropShadowColor:0xf5c542, dropShadowBlur:18, dropShadowDistance:0
+        fontFamily:"Orbitron", fontWeight:"900", fontSize:big ? 48 : 34, letterSpacing:1,
+        fill:[0xffffff,0xfff6d8,0xf5c542,0xd7a72c], stroke:0x1a0f00, strokeThickness:7,
+        dropShadow:true, dropShadowColor:0xf5c542, dropShadowBlur:20, dropShadowDistance:0
       });
       a.anchor.set(0.5); a.y = t.y + fontSize*0.85;
       c.addChild(a);
@@ -2930,19 +3044,34 @@ function showBanner(text, color=0x22e5ff, holdMs=900, sub="", imgKey=null, opts=
     // scale the whole banner up so it dominates the canvas on big wins
     let finalScale = 1;
     if (big){
-      const targetW = CANVAS_W * 0.9;
-      finalScale = Math.min(1.9, Math.max(1, targetW / c.width));
+      const targetW = CANVAS_W * 0.86;
+      finalScale = Math.min(1.7, Math.max(1, targetW / Math.max(t.width, 220)));
     }
-    c.x = CANVAS_W/2; c.y = CANVAS_H*0.36; c.alpha = 0; c.scale.set(finalScale*0.6);
+    c.x = CANVAS_W/2; c.y = CANVAS_H*0.36; c.alpha = 0; c.scale.set(finalScale*0.4);
     layerBanner.addChild(c);
-    if (big) spawnCoinRain(34);
-    await Promise.all([tween(c,{alpha:1},220), tween(c.scale,{x:finalScale,y:finalScale},280, easeOutBack)]);
-    await wait(holdMs);
-    const fadeOps = [tween(c,{alpha:0},260), tween(c.scale,{x:finalScale*1.12,y:finalScale*1.12},260)];
-    if (backdrop) fadeOps.push(tween(backdrop,{alpha:0},260));
+    if (big) spawnCoinRain(38, true);
+
+    // punchy entrance: overshoot bounce, not a flat ease
+    await Promise.all([
+      tween(c,{alpha:1},200),
+      tween(c.scale,{x:finalScale*1.12,y:finalScale*1.12},260, easeOutCubic).then(()=>tween(c.scale,{x:finalScale,y:finalScale},160)),
+    ]);
+
+    // tap/click anywhere to dismiss early, otherwise auto-close after holdMs
+    let dismissed = false;
+    const dismiss = () => { dismissed = true; };
+    app.view.addEventListener("pointerdown", dismiss, { once:true });
+    const raysTick = () => { if (rays && rays.parent) { rays.rotation += 0.0016; requestAnimationFrame(raysTick); } };
+    if (rays) requestAnimationFrame(raysTick);
+    const stepMs = 60;
+    for (let elapsed=0; elapsed<holdMs && !dismissed; elapsed+=stepMs) await wait(stepMs);
+
+    app.view.removeEventListener("pointerdown", dismiss);
+    const fadeOps = [tween(c,{alpha:0},240), tween(c.scale,{x:finalScale*1.1,y:finalScale*1.1},240)];
+    if (dim) fadeOps.push(tween(dim,{alpha:0},280), tween(wash,{alpha:0},280), tween(rays,{alpha:0},280));
     await Promise.all(fadeOps);
     layerBanner.removeChild(c);
-    if (backdrop) layerBanner.removeChild(backdrop);
+    if (dim){ layerBanner.removeChild(dim); layerBanner.removeChild(wash); layerBanner.removeChild(rays); }
     resolve();
   });
 }
@@ -3127,8 +3256,8 @@ function updateFsInfo(){
 function winTierBanner(mult){
   if (mult >= MAX_WIN_MULT) return {text:"MAX WIN!", color:0xff2f8f, sub:"20,000x — LÍMITE MÁXIMO ALCANZADO"};
   if (mult >= 500) return {text:"VOID WIN", color:0xe347ff, sub:mult.toFixed(2)+"x"};
-  if (mult >= 150) return {text:"EPIC WIN", color:0xff8a3d, sub:mult.toFixed(2)+"x"};
-  if (mult >= 50)  return {text:"MEGA WIN", color:0xf5c542, sub:mult.toFixed(2)+"x"};
+  if (mult >= 150) return {text:"MEGA WIN", color:0xff8a3d, sub:mult.toFixed(2)+"x"};
+  if (mult >= 50)  return {text:"SUPER WIN", color:0xf5c542, sub:mult.toFixed(2)+"x"};
   if (mult >= 10)  return {text:"BIG WIN", color:0x22e5ff, sub:mult.toFixed(2)+"x"};
   return null;
 }

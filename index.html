@@ -1429,6 +1429,12 @@ void main(void)\r
     100%{ background-position:-300% 0; }
   }
   #gm-banner.pulse .val{ transform:scale(1.3); }
+  #gm-banner.pulse{ animation: gmRippleFlash 0.5s ease-out; }
+  @keyframes gmRippleFlash{
+    0%{ box-shadow:0 3px 14px #000c, inset 0 1px 0 #ffdf8a40, 0 0 0px 0px #22e5ff00; }
+    35%{ box-shadow:0 3px 14px #000c, inset 0 1px 0 #ffdf8a40, 0 0 26px 10px #22e5ffaa; }
+    100%{ box-shadow:0 3px 14px #000c, inset 0 1px 0 #ffdf8a40, 0 0 16px #f5c54222; }
+  }
 
   /* ---------- bottom HUD ---------- */
   #hud-bottom{
@@ -2096,8 +2102,21 @@ const btnMenu = $("#btn-menu");
 function fmt(n){
   return n.toLocaleString("en-US", {minimumFractionDigits:2, maximumFractionDigits:2});
 }
-function refreshHud(){
-  elBalance.textContent = fmt(state.balance);
+function animateNumber(el, toValue, duration=550){
+  const from = parseFloat((el.textContent||"0").replace(/,/g,"")) || 0;
+  if (Math.abs(toValue - from) < 0.005 || state.turbo){ el.textContent = fmt(toValue); return Promise.resolve(); }
+  return new Promise(resolve => {
+    const t0 = performance.now();
+    function step(now){
+      const t = Math.min(1, (now-t0)/duration);
+      el.textContent = fmt(from + (toValue-from)*easeOutCubic(t));
+      if (t < 1) requestAnimationFrame(step); else resolve();
+    }
+    requestAnimationFrame(step);
+  });
+}
+function refreshHud(skipBalance){
+  if (!skipBalance) elBalance.textContent = fmt(state.balance);
   elBet.textContent = fmt(currentBet());
   elMult.textContent = "x" + state.globalMultiplier;
   elFreeSpins.textContent = state.inFreeSpins ? state.fsIndex + "/" + state.fsTotal : "0";
@@ -3316,7 +3335,7 @@ async function playCascadeStep(entry){
     if (totalStepPay > 0){
       floatingWinText(totalStepPay / state.currentBetRef);
       state.runningWin += totalStepPay;
-      elWin.textContent = fmt(state.runningWin);
+      animateNumber(elWin, state.runningWin, 420);
     }
     await wait(520);
   }
@@ -3395,9 +3414,10 @@ async function runSpin(forceMode){
   state.globalMultiplier = 1;
   state.inFreeSpins = false;
   state.runningWin = result.totalWin;
-  elWin.textContent = fmt(result.totalWin);
+  animateNumber(elWin, result.totalWin, 500);
+  animateNumber(elBalance, state.balance, 650);
   updateFsInfo();
-  refreshHud();
+  refreshHud(true);
 
   const tier = winTierBanner(result.totalWinMultiplier);
   if (tier){

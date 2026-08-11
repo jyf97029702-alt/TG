@@ -1509,7 +1509,8 @@ void main(void)\r
     filter:drop-shadow(0 0 4px #02141a) drop-shadow(0 0 8px #22e5ff);
   }
   #btn-spin:active{ transform:translateY(2px); box-shadow:0 0 16px #22e5ff55, 0 2px 0 #045063; }
-  #btn-spin:disabled{ filter:grayscale(0.7) brightness(0.6); cursor:not-allowed; pointer-events:none; }
+  #btn-spin:disabled{ cursor:not-allowed; pointer-events:none; }
+  #btn-spin-wrap.spin-active::after{ animation: spinRingPulse 0.55s ease-in-out infinite; }
 
   /* ---------- modal ---------- */
   .modal-overlay{
@@ -2135,6 +2136,7 @@ function setSpinning(v){
   state.spinning = v;
   btnSpin.disabled = v || state.autobet.active;
   btnMenu.disabled = v || state.autobet.active;
+  document.getElementById("btn-spin-wrap").classList.toggle("spin-active", v);
   document.getElementById("bet-inc").style.pointerEvents = (v || state.autobet.active) ? "none" : "auto";
   document.getElementById("bet-dec").style.pointerEvents = (v || state.autobet.active) ? "none" : "auto";
 }

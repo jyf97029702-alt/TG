@@ -2443,6 +2443,18 @@ const layerFx = new PIXI.Container();
 const layerBanner = new PIXI.Container();
 app.stage.addChild(layerBg, layerGrid, layerFx, layerBanner);
 
+// clip layerGrid to the grid window so continuously-scrolling reel strips
+// (see spinReelIntro) get cut off cleanly at the frame edge instead of
+// spilling into the header/ribbon above and below. Added to layerFx (a sibling
+// that nothing ever calls removeChildren() on) rather than as a child of
+// layerGrid itself, so routine layerGrid.removeChildren() calls elsewhere
+// (setGridInstant, etc.) can never accidentally strip the mask away.
+const layerGridMask = new PIXI.Graphics();
+layerGridMask.beginFill(0xffffff).drawRect(GRID_X, GRID_Y, GRID_W, GRID_H).endFill();
+layerGridMask.visible = false;
+layerFx.addChild(layerGridMask);
+layerGrid.mask = layerGridMask;
+
 function cellCenter(i){
   const [r,c] = rcOf(i);
   return { x: GRID_X + c*(CELL_W+GAP) + CELL_W/2, y: GRID_Y + r*(CELL_H+GAP) + CELL_H/2 };
@@ -2873,62 +2885,81 @@ function startFrameVibration(strength=6, intervalMs=45){
 }
 
 async function spinReelIntro(finalGrid){
-  // real spin feel: each column cycles rapidly through random symbols (with a
-  // faint cyan/purple energy streak behind it) before the true result drops in
-  // with a weighted bounce. Uses cheap flicker tiles (no blur filters) driven by
-  // requestAnimationFrame instead of a setTimeout(55ms) poll loop, and tighter
-  // per-column timings, so the spin reads as fast/fluid instead of stuttery.
+  // true continuous-scroll reel: a tall strip of symbols behind the grid window
+  // (masked by layerGridMask) slides down at speed via rAF using real per-frame
+  // delta time, with a fake motion-blur stretch/fade at full speed, decelerating
+  // into a weighted-bounce stop -- reads as a real spinning reel instead of a
+  // discrete symbol-swap flicker.
   layerGrid.removeChildren();
   tileSlots = new Array(GRID_CELLS).fill(null);
   const flickerSyms = PAYING_SYMBOLS.concat([WILD]);
-  const stopFrameShake = startFrameVibration(2.4, 40);
-  const FLICKER_STEP = 34; // ms between symbol swaps -- fast enough to read as a blur
+  const stopFrameShake = startFrameVibration(2.2, 40);
+  const STEP = CELL_H + GAP;
+  const BUFFER = 3;
+  const totalTiles = ROWS + BUFFER*2;
+  const SPIN_SPEED = 2500; // px/sec at full speed
 
   const proms = [];
   for (let c=0;c<COLS;c++){
     proms.push((async ()=>{
-      const cycleDur = 190 + c*85;
-      const streak = new PIXI.Graphics();
+      const colX = cellCenter(idx(0,c)).x;
+      const stripTop = GRID_Y - BUFFER*STEP;
       const streakColor = c%2===0 ? 0x22e5ff : 0xb26bff;
-      streak.beginFill(streakColor, 0.11).drawRect(-CELL_W/2-2, -6, CELL_W+4, GRID_H+12).endFill();
-      const sx = cellCenter(idx(0,c)).x;
-      streak.x = sx; streak.y = GRID_Y + GRID_H/2;
-      layerGrid.addChild(streak);
 
-      // pre-place ROWS flicker tiles once, then just swap their texture/skew each
-      // tick instead of destroying + rebuilding whole containers every frame
-      const flickerTiles = [];
-      for (let r=0;r<ROWS;r++){
-        const i = idx(r,c);
+      const strip = new PIXI.Container();
+      strip.x = colX;
+      layerGrid.addChild(strip);
+
+      const streak = new PIXI.Graphics();
+      streak.beginFill(streakColor, 0.10)
+        .drawRect(-CELL_W/2-2, stripTop-6, CELL_W+4, totalTiles*STEP+12)
+        .endFill();
+      strip.addChild(streak);
+
+      const tiles = [];
+      for (let i=0;i<totalTiles;i++){
         const tile = buildFlickerTile(flickerSyms[Math.floor(Math.random()*flickerSyms.length)]);
-        placeTileAt(tile, i);
-        tile.alpha = 0.7;
-        tile.scale.y = 1.35;
-        layerGrid.addChild(tile);
-        flickerTiles.push(tile);
-        tileSlots[i] = tile;
+        tile.y = stripTop + i*STEP + STEP/2;
+        strip.addChild(tile);
+        tiles.push(tile);
       }
 
+      const spinDur = state.turbo ? 260 + c*40 : 640 + c*140;
+      const decelDur = state.turbo ? 90 : 280;
+      const decelStart = spinDur - decelDur;
       const t0 = performance.now();
-      let lastSwap = 0;
+      let prevT = t0;
+
       await new Promise(resolve => {
-        function step(now){
+        function frame(now){
+          const dt = Math.min(48, now - prevT); // clamp so a throttled/backgrounded tab can't jump tiles
+          prevT = now;
           const elapsed = now - t0;
-          if (elapsed - lastSwap >= FLICKER_STEP){
-            lastSwap = elapsed;
-            flickerTiles.forEach(tile => {
+          let speed;
+          if (elapsed < decelStart){
+            speed = SPIN_SPEED;
+          } else {
+            const p = Math.min(1, (elapsed - decelStart) / decelDur);
+            speed = SPIN_SPEED * (1 - easeOutCubic(p));
+          }
+          const moveY = speed * dt / 1000;
+          const blurT = speed / SPIN_SPEED;
+          tiles.forEach(tile => {
+            tile.y += moveY;
+            if (tile.y - STEP/2 > GRID_Y + GRID_H){
+              tile.y -= totalTiles*STEP;
               tile.removeChildren();
               tile.addChild(drawIcon(flickerSyms[Math.floor(Math.random()*flickerSyms.length)], null));
-            });
-          }
-          if (elapsed < cycleDur) requestAnimationFrame(step); else resolve();
+            }
+            tile.scale.y = 1 + blurT*0.35;
+            tile.alpha = 1 - blurT*0.3;
+          });
+          if (elapsed < spinDur) requestAnimationFrame(frame); else resolve();
         }
-        requestAnimationFrame(step);
+        requestAnimationFrame(frame);
       });
 
-      layerGrid.removeChild(streak);
-      flickerTiles.forEach(tile => layerGrid.removeChild(tile));
-      for (let r=0;r<ROWS;r++) tileSlots[idx(r,c)] = null;
+      layerGrid.removeChild(strip);
 
       const dropProms = [];
       for (let r=0;r<ROWS;r++){
@@ -2937,10 +2968,10 @@ async function spinReelIntro(finalGrid){
         const tile = buildTile(cell.symbol, cell.value);
         placeTileAt(tile, i);
         const target = cellCenter(i);
-        tile.y = target.y - 340 - r*24;
+        tile.y = target.y - 46 - r*8;
         layerGrid.addChild(tile);
         tileSlots[i] = tile;
-        dropProms.push(tween(tile, {y: target.y}, 300 + r*24, easeOutBack));
+        dropProms.push(tween(tile, {y: target.y}, 170 + r*16, easeOutBack));
       }
       await Promise.all(dropProms);
       // weighted "impact" as the column settles -- brief flash at its base

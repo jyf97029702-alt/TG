@@ -2792,17 +2792,21 @@ function buildTile(symbol, value){
   const c = new PIXI.Container();
   const pal = symbol===ORB ? orbPalette(value) : PALETTE[symbol];
 
-  // soft radial backdrop glow (keeps symbols readable on the shared dark panel without hard tile borders)
+  // soft radial backdrop glow -- faked with concentric rings of rising alpha
+  // instead of a live PIXI.BlurFilter. With ~25 tiles on screen simultaneously
+  // (more during spin/cascade), a BlurFilter per tile means a GPU render-to-
+  // texture pass every single frame for each one -- that constant per-frame
+  // cost was the real source of the "everything feels laggy" complaint, not
+  // just the reel-spin logic. Plain filled circles are just cached geometry,
+  // effectively free to redraw.
   const backdrop = new PIXI.Graphics();
-  backdrop.beginFill(pal.glow, 0.16).drawCircle(0,0,Math.min(CELL_W,CELL_H)*0.46).endFill();
-  backdrop.filters = [new PIXI.BlurFilter(10)];
+  const maxR = Math.min(CELL_W,CELL_H)*0.5;
+  const ringSteps = [1.0, 0.78, 0.56, 0.36, 0.18];
+  const ringAlphas = [0.045, 0.06, 0.075, 0.095, 0.13];
+  for (let i=0;i<ringSteps.length;i++){
+    backdrop.beginFill(pal.glow, ringAlphas[i]).drawCircle(0,0,maxR*ringSteps[i]).endFill();
+  }
   c.addChild(backdrop);
-
-  // outer glow (blurred duplicate icon behind)
-  const glow = drawIcon(symbol, value);
-  glow.filters = [new PIXI.BlurFilter(7)];
-  glow.tint = pal.glow; glow.alpha = 0.65; glow.scale.x *= 1.18; glow.scale.y *= 1.18;
-  c.addChild(glow);
 
   const icon = drawIcon(symbol, value);
   c.addChild(icon);

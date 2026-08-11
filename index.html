@@ -1196,10 +1196,15 @@ void main(void)\r
     93.2%{ opacity:0.4; }
     94%{ opacity:0; }
   }
+  /* fixed "design resolution" card, uniformly scaled to fit the viewport via JS
+     (see fitGameFrame()) so every element -- grid included -- shrinks/grows
+     together instead of the header/footer chrome staying fixed-size and
+     crushing the aspect-ratio-locked grid on short/wide viewports */
   #game-frame{
-    position:relative;
-    width:min(96vw, 580px);
-    height:min(96vh, 940px);
+    position:absolute; left:50%; top:50%;
+    width:460px; height:900px;
+    transform:translate(-50%,-50%) scale(1);
+    transform-origin:center center;
     display:flex; flex-direction:column;
     border:none;
     background:transparent;
@@ -1221,42 +1226,28 @@ void main(void)\r
   }
   .icon-corner-btn:hover{ border-color:var(--cyan); color:var(--cyan); }
   .util-icons-row{ display:flex; justify-content:center; gap:8px; margin-top:4px; }
-  .chest-btn{
-    position:relative;
-    display:flex; align-items:center; justify-content:center; gap:6px;
-    flex:0 0 auto; width:calc(100% - 24px); height:74px; margin:14px 12px 8px; padding:6px 20px 6px 88px;
-    background:linear-gradient(180deg,#1a1204,#0c0800);
-    border:2px solid var(--gold); border-radius:14px;
+  .chest-side{
+    position:absolute; right:1.5%; bottom:1.5%; z-index:8;
+    width:17%; background:none; border:none; padding:0;
     cursor:pointer; font-family:inherit;
-    box-shadow:0 0 0px 0px #f5c54200, inset 0 1px 0 #ffdf8a40, 0 4px 14px #000c;
+    animation: chestFloat 2.4s ease-in-out infinite;
+  }
+  .chest-side::before{
+    content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:88px; height:88px; border-radius:50%; z-index:1; pointer-events:none;
+    background:radial-gradient(circle, #b26bffaa 0%, #f5c54277 40%, transparent 72%);
     animation: chestPulse 1.7s ease-in-out infinite;
   }
   @keyframes chestPulse{
-    0%,100%{ box-shadow:0 0 10px 2px #f5c54255, inset 0 1px 0 #ffdf8a40, 0 4px 14px #000c; border-color:var(--gold); }
-    50%{ box-shadow:0 0 26px 7px #f5c542aa, inset 0 1px 0 #ffdf8a40, 0 4px 14px #000c; border-color:#fff6d8; }
+    0%,100%{ opacity:0.75; }
+    50%{ opacity:1; }
   }
-  .chest-btn::before{
-    content:""; position:absolute; left:2px; top:50%; transform:translateY(-50%);
-    width:96px; height:96px; border-radius:50%; z-index:1; pointer-events:none;
-    background:radial-gradient(circle, #b26bffaa 0%, #f5c54277 40%, transparent 72%);
-  }
-  .chest-img{
-    position:absolute; left:6px; top:50%; width:100px; height:auto; z-index:2;
-    transform:translateY(-50%) rotate(-2deg);
-    animation: chestFloat 2.4s ease-in-out infinite;
-  }
+  .chest-side-img{ position:relative; z-index:2; width:100%; height:auto; display:block; }
   @keyframes chestFloat{
-    0%,100%{ transform:translateY(-50%) rotate(-2deg); }
-    50%{ transform:translateY(-54%) rotate(2deg); }
+    0%,100%{ transform:rotate(-2deg); }
+    50%{ transform:translateY(-4px) rotate(2deg); }
   }
-  .chest-text{
-    font-family:'Cinzel',serif; font-weight:900; font-size:21px; letter-spacing:2px; line-height:1.15;
-    background:linear-gradient(180deg, #fff6d8, var(--gold) 55%, var(--gold-dark));
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-    text-shadow:0 0 10px #f5c54277;
-    text-align:center;
-  }
-  .chest-btn:disabled{ filter:grayscale(0.7) brightness(0.55); cursor:not-allowed; animation:none; }
+  .chest-side:disabled{ filter:grayscale(0.7) brightness(0.55); cursor:not-allowed; animation:none; }
   .corner-box{
     position:absolute; top:6px; z-index:6;
     background:linear-gradient(180deg,#0c1626,#050a14);
@@ -1374,7 +1365,8 @@ void main(void)\r
   .mode-badge.show{ display:block; }
 
   /* ---------- canvas area ---------- */
-  #pixi-wrap{ position:relative; flex:1 1 auto; min-height:0; aspect-ratio:640/740; max-width:100%; max-height:100%; margin:4px auto 0; }
+  #grid-row{ display:flex; flex-direction:row; align-items:center; justify-content:center; flex:1 1 auto; min-height:0; margin:4px 0 0; }
+  #pixi-wrap{ position:relative; flex:1 1 auto; min-height:0; aspect-ratio:640/740; max-width:100%; max-height:100%; }
   #pixi-container{ position:absolute; inset:0; }
   #pixi-container canvas{ width:100% !important; height:100% !important; display:block; }
   #gm-badge{
@@ -1649,9 +1641,14 @@ void main(void)\r
       <div class="mode-badge" id="mode-badge">MODO ANTE BET · x3 · SCATTER TRIPLICADO</div>
     </div>
 
-    <!-- ===== CANVAS ===== -->
-    <div id="pixi-wrap">
-      <div id="pixi-container"></div>
+    <!-- ===== CANVAS + BUY BONUS (CHEST) ===== -->
+    <div id="grid-row">
+      <div id="pixi-wrap">
+        <div id="pixi-container"></div>
+        <button class="chest-side" id="btn-buybonus" title="Comprar Free Spins">
+          <img class="chest-side-img" src="" alt="Comprar Free Spins" id="chest-img">
+        </button>
+      </div>
     </div>
 
     <!-- ===== GLOBAL MULTIPLIER RIBBON ===== -->
@@ -1659,11 +1656,6 @@ void main(void)\r
       <div class="lbl">GLOBAL MULTIPLIER</div>
       <div class="val" id="val-mult">x1</div>
     </div>
-
-    <!-- ===== BUY BONUS (CHEST) ===== -->
-    <button class="chest-btn" id="btn-buybonus" title="Comprar Free Spins">
-      <img class="chest-img" src="" alt="Comprar Free Spins" id="chest-img">
-    </button>
 
     <!-- ===== BOTTOM HUD ===== -->
     <div id="hud-bottom">
@@ -3538,6 +3530,17 @@ function updateAutobetUI(){
 /* ---------------------------------------------------------------------------------------
    11) BOOT
    --------------------------------------------------------------------------------------- */
+const DESIGN_W = 460, DESIGN_H = 900;
+function fitGameFrame(){
+  const frame = document.getElementById("game-frame");
+  if (!frame) return;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const scale = Math.min((vw*0.96)/DESIGN_W, (vh*0.96)/DESIGN_H);
+  frame.style.transform = `translate(-50%,-50%) scale(${scale})`;
+}
+window.addEventListener("resize", fitGameFrame);
+fitGameFrame();
+
 async function boot(){
   await Promise.all([
     preloadArt(),

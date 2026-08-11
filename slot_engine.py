@@ -9,8 +9,8 @@ from the RNG instance passed/created inside the call, and the full outcome
 (grid, every cascade step, orb/collector events, free spins, final payout)
 is returned as a JSON-serialisable dict.
 
-Grid:        6 rows x 5 columns (30 cells)
-Wins:        Scatter pays -> 10+ of the same symbol anywhere on the grid pays
+Grid:        5 rows x 5 columns (25 cells)
+Wins:        Scatter pays -> 8+ of the same symbol anywhere on the grid pays
 Mechanic:    Cascade / Tumble -> winning symbols are removed, the grid
              collapses with gravity and refills from the top, repeating
              until no new win is formed.
@@ -41,7 +41,7 @@ from typing import Any, Dict, List, Optional, Tuple
 # GRID / SYMBOL CONSTANTS
 # ---------------------------------------------------------------------------
 
-ROWS = 6
+ROWS = 5
 COLS = 5
 GRID_CELLS = ROWS * COLS
 
@@ -73,11 +73,15 @@ SYMBOL_NAMES = {
 }
 
 # Scatter-pay paytable, built from a shared tier curve x a per-symbol value factor.
-# With a 10-of-30 "anywhere on grid" trigger the low tier still lands reasonably often,
+# Grid is 5x5 = 25 cells; tier thresholds are the 30-cell tiers rescaled by 25/30 so the
+# relative difficulty of each tier (fraction of the grid that must match) stays the same.
+# With an 8-of-25 "anywhere on grid" trigger the low tier still lands reasonably often,
 # so it pays a modest-but-real amount rather than a token fraction of a cent; the payout
-# escalates sharply from tier 15+, where landing that many of one symbol is a genuine
-# (and, for 25+, extremely rare) event.
-_TIER_CURVE: Dict[int, float] = {10: 0.07652, 12: 0.22955, 15: 0.76516, 20: 3.8258, 25: 25.50535}
+# escalates sharply from tier 13+, where landing that many of one symbol is a genuine
+# (and, for 21+, extremely rare) event. Multipliers re-derived by simulation -- see
+# run_simulation()/__main__ for the calibration this was checked against.
+MIN_WIN_COUNT = 8
+_TIER_CURVE: Dict[int, float] = {8: 0.04965, 10: 0.14893, 13: 0.49643, 17: 2.48215, 21: 16.54769}
 _VALUE_FACTOR: Dict[str, float] = {
     "S1": 1.0, "S2": 1.4, "S3": 2.0, "S4": 2.8,
     "S5": 5.0, "S6": 8.0, "S7": 13.0, "S8": 20.0,
@@ -104,8 +108,8 @@ MAX_GLOBAL_MULT = 2000.0  # cap on the accumulating Global Multiplier itself, so
 
 # Reel weights used for the base game (no ORB / COLLECT, they are Free Spins only).
 # Weights are calibrated (see run_simulation) so that no single symbol dominates the
-# 30-cell grid too heavily -- with a scatter-pays-anywhere mechanic on 30 cells, a
-# skewed distribution makes 8+ matches far too likely and blows up the RTP.
+# 25-cell grid too heavily -- with a scatter-pays-anywhere mechanic on 25 cells, a
+# skewed distribution makes MIN_WIN_COUNT+ matches far too likely and blows up the RTP.
 BASE_WEIGHTS: Dict[str, int] = {
     "S1": 170, "S2": 155, "S3": 139, "S4": 124,
     "S5": 109, "S6": 93, "S7": 78, "S8": 62,
@@ -606,7 +610,7 @@ class VoidChronosEngine:
         for sym in PAYING_SYMBOLS:
             sym_positions = [i for i, c in enumerate(grid) if c is not None and c.symbol == sym]
             total_count = len(sym_positions) + len(wild_positions)
-            if total_count < 10:
+            if total_count < MIN_WIN_COUNT:
                 continue
             mult = _pay_multiplier(sym, total_count)
             if mult <= 0:
@@ -620,8 +624,8 @@ class VoidChronosEngine:
             })
             all_win_positions.update(positions)
 
-        # A pure wild win (8+ wilds with no matching paying symbol requirement)
-        if len(wild_positions) >= 10:
+        # A pure wild win (MIN_WIN_COUNT+ wilds with no matching paying symbol requirement)
+        if len(wild_positions) >= MIN_WIN_COUNT:
             mult = _pay_multiplier(WILD, len(wild_positions))
             if mult > 0:
                 wins.append({
@@ -634,7 +638,7 @@ class VoidChronosEngine:
 
         # Scatter pay (scatters do not accept wild substitution)
         scat_positions = [i for i, c in enumerate(grid) if c is not None and c.symbol == SCATTER]
-        if len(scat_positions) >= 10:
+        if len(scat_positions) >= MIN_WIN_COUNT:
             mult = _pay_multiplier(SCATTER, len(scat_positions))
             if mult > 0:
                 wins.append({

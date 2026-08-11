@@ -1602,7 +1602,7 @@ void main(void)\r
     <div class="modal-overlay" id="modal-paytable">
       <div class="modal-box">
         <h2>TABLA DE PAGOS</h2>
-        <div class="sub">Scatter Pays — 10+ símbolos iguales en cualquier parte de la grilla. Multiplicador del pago total en Free Spins.</div>
+        <div class="sub">Scatter Pays — 8+ símbolos iguales en cualquier parte de la grilla. Multiplicador del pago total en Free Spins.</div>
         <div id="pay-list"></div>
         <button class="modal-close" id="paytable-close">Cerrar</button>
       </div>
@@ -1634,7 +1634,8 @@ void main(void)\r
 /* ---------------------------------------------------------------------------------------
    1) CONFIG / GAME DATA  (mirrors slot_engine.py)
    --------------------------------------------------------------------------------------- */
-const ROWS = 6, COLS = 5, GRID_CELLS = ROWS * COLS;
+const ROWS = 5, COLS = 5, GRID_CELLS = ROWS * COLS;
+const MIN_WIN_COUNT = 8;
 
 const LOW_SYMBOLS = ["S1","S2","S3","S4"];
 const HIGH_SYMBOLS = ["S5","S6","S7","S8"];
@@ -1647,7 +1648,7 @@ const SYMBOL_NAMES = {
   WILD:"Void Wild", SCAT:"Chronos Scatter", PORTAL:"Portal Rift", COLLECT:"Void Collector", ORB:"Multiplier Orb"
 };
 
-const TIER_CURVE = {10:0.07652, 12:0.22955, 15:0.76516, 20:3.8258, 25:25.50535};
+const TIER_CURVE = {8:0.04965, 10:0.14893, 13:0.49643, 17:2.48215, 21:16.54769};
 const VALUE_FACTOR = { S1:1.0, S2:1.4, S3:2.0, S4:2.8, S5:5.0, S6:8.0, S7:13.0, S8:20.0, WILD:28.0, SCAT:25.0 };
 const PAYTABLE = {};
 for (const sym in VALUE_FACTOR){
@@ -1785,14 +1786,14 @@ function evaluateWins(grid){
     const positions = [];
     grid.forEach((c,i)=>{ if (c && c.symbol===sym) positions.push(i); });
     const total = positions.length + wildPositions.length;
-    if (total < 10) continue;
+    if (total < MIN_WIN_COUNT) continue;
     const mult = payMultiplier(sym, total);
     if (mult <= 0) continue;
     const posSet = Array.from(new Set(positions.concat(wildPositions))).sort((a,b)=>a-b);
     wins.push({symbol:sym, count:total, positions:posSet, payBase:mult});
     posSet.forEach(p=>allPositions.add(p));
   }
-  if (wildPositions.length >= 10){
+  if (wildPositions.length >= MIN_WIN_COUNT){
     const mult = payMultiplier(WILD, wildPositions.length);
     if (mult > 0){
       const posSet = [...wildPositions].sort((a,b)=>a-b);
@@ -1802,7 +1803,7 @@ function evaluateWins(grid){
   }
   const scatPositions = [];
   grid.forEach((c,i)=>{ if (c && c.symbol===SCATTER) scatPositions.push(i); });
-  if (scatPositions.length >= 10){
+  if (scatPositions.length >= MIN_WIN_COUNT){
     const mult = payMultiplier(SCATTER, scatPositions.length);
     if (mult > 0){
       wins.push({symbol:SCATTER, count:scatPositions.length, positions:scatPositions, payBase:mult});
@@ -2099,7 +2100,7 @@ modalPaytable.addEventListener("click", e => { if (e.target === modalPaytable) m
 const modalRules = $("#modal-rules");
 $("#rules-text").innerHTML = `
   <h3>Scatter Pays &amp; Cascada</h3>
-  10 o más símbolos iguales en cualquier parte de la grilla 6x5 pagan. Los símbolos ganadores explotan y los nuevos caen desde arriba (tumble), pudiendo encadenar varias cascadas en un mismo giro.
+  8 o más símbolos iguales en cualquier parte de la grilla 5x5 pagan. Los símbolos ganadores explotan y los nuevos caen desde arriba (tumble), pudiendo encadenar varias cascadas en un mismo giro.
   <h3>Portal Wild</h3>
   El símbolo Portal convierte 2-4 símbolos adyacentes en Wilds antes de evaluar los pagos.
   <h3>Orb Collector (Free Spins)</h3>
@@ -2157,7 +2158,7 @@ function flashInsufficientFunds(){
    6) PIXI APP + VISUAL FACTORY
    --------------------------------------------------------------------------------------- */
 const CANVAS_W = 640, CANVAS_H = 740;
-const CELL_W = 121, CELL_H = 109, GAP = 3;
+const CELL_W = 121, CELL_H = 131, GAP = 3;
 const GRID_W = COLS*CELL_W + (COLS-1)*GAP;
 const GRID_H = ROWS*CELL_H + (ROWS-1)*GAP;
 const GRID_X = (CANVAS_W - GRID_W) / 2;
@@ -2383,7 +2384,7 @@ function drawIcon(symbol, value){
   if (tex){
     const spr = new PIXI.Sprite(tex);
     spr.anchor.set(0.5);
-    const maxDim = 106;
+    const maxDim = 116;
     const ratio = tex.width / tex.height;
     if (ratio >= 1){ spr.width = maxDim; spr.height = maxDim / ratio; }
     else { spr.height = maxDim; spr.width = maxDim * ratio; }

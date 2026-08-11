@@ -2675,6 +2675,8 @@ function buildTile(symbol, value){
   }
 
   c.pivot.set(0,0);
+  c.__symbol = symbol;
+  c.__glowColor = pal.glow;
   return c;
 }
 
@@ -2814,16 +2816,20 @@ async function playTumble(removePositions, newSymbolPositions, gridAfter){
   const survivorMap = computeColumnTumbleMap(removePositions);
   const proms = [];
 
-  // explode removed tiles
+  // explode removed tiles: bright charge-flash first, then burst into particles,
+  // with a handful flying toward the WIN readout so the payout feels "collected"
+  const winTargetX = GRID_X * 0.4, winTargetY = GRID_Y + GRID_H + 26;
   removePositions.forEach(i => {
     const t = tileSlots[i];
     if (!t) return;
-    spawnBurst(t.x, t.y, PALETTE[t.__symbol]?.glow || 0x22e5ff);
-    proms.push(tween(t, {alpha:0}, 220).then(()=>{
-      t.scale.set(1);
+    const glowColor = t.__glowColor || 0x22e5ff;
+    t.tint = 0xffffff;
+    proms.push(tween(t.scale, {x:1.5,y:1.5}, 90, easeOutCubic).then(() => {
+      spawnBurst(t.x, t.y, glowColor, 16);
+      flyToPoint(t.x, t.y, winTargetX, winTargetY, glowColor, 4);
+      t.tint = glowColor;
     }));
-    proms.push(tween(t.scale, {x:1.4,y:1.4}, 220));
-    layerGrid.removeChild
+    proms.push(tween(t, {alpha:0}, 260).then(()=>{ t.scale.set(1); t.tint = 0xffffff; }));
   });
   await Promise.all(proms);
   removePositions.forEach(i => { const t = tileSlots[i]; if (t){ layerGrid.removeChild(t); tileSlots[i]=null; } });
@@ -2867,12 +2873,33 @@ function spawnBurst(x,y,color,count=14){
   }
 }
 
-function highlightWin(positions, color=0xffe27a){
+function flyToPoint(x, y, targetX, targetY, color, count=4){
+  for (let i=0;i<count;i++){
+    const p = new PIXI.Graphics();
+    p.beginFill(color, 1).drawCircle(0,0,2.5+Math.random()*2).endFill();
+    p.x = x + (Math.random()*16-8); p.y = y + (Math.random()*16-8);
+    layerFx.addChild(p);
+    const dur = 420 + Math.random()*180;
+    tween(p, {x:targetX, y:targetY, alpha:0.15}, dur, easeOutCubic).then(()=>layerFx.removeChild(p));
+  }
+}
+
+function highlightWin(positions){
   positions.forEach(i => {
     const t = tileSlots[i];
     if (!t) return;
-    tween(t.scale, {x:1.18,y:1.18}, 180, easeOutBack).then(()=>tween(t.scale,{x:1,y:1},180));
-    spawnBurst(t.x, t.y, color, 6);
+    const glowColor = t.__glowColor || 0xffe27a;
+    // charge-up: bright flash + bigger bounce than a plain scale pulse, so the
+    // win reads as an "impact" the instant it's confirmed
+    const ring = new PIXI.Graphics();
+    ring.lineStyle(3, glowColor, 0.9).drawCircle(0,0,26);
+    ring.x = t.x; ring.y = t.y; ring.scale.set(0.4); ring.alpha = 1;
+    layerFx.addChild(ring);
+    tween(ring.scale, {x:1.6,y:1.6}, 320, easeOutCubic);
+    tween(ring, {alpha:0}, 320).then(()=>layerFx.removeChild(ring));
+
+    tween(t.scale, {x:1.28,y:1.28}, 150, easeOutBack).then(()=>tween(t.scale,{x:1,y:1},200));
+    spawnBurst(t.x, t.y, glowColor, 8);
   });
 }
 
